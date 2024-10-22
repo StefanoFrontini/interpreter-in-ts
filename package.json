@@ -1,0 +1,19 @@
+{
+  "name": "interpreter-in-ts",
+  "version": "1.0.0",
+  "main": "main.ts",
+  "type": "module",
+  "imports": {
+    "#root/*.ts": "./*.ts"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --experimental-test-coverage --test **/*.test.ts",
+    "dev": "node --watch --experimental-strip-types script.ts"
+  },
+  "author": "Stefano Frontini",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.7.8"
+  }
+}
