@@ -27,10 +27,10 @@ export type TokenType =
   | "ELSE"
   | "RETURN";
 
-export type Token = {
+export interface Token {
   type: TokenType;
   literal: string;
-};
+}
 export const ILLEGAL = "ILLEGAL",
   EOF = "EOF",
   // Identifiers + literals
@@ -62,3 +62,16 @@ export const ILLEGAL = "ILLEGAL",
   IF = "IF",
   ELSE = "ELSE",
   RETURN = "RETURN";
+
+const keywords = new Map<string, TokenType>([
+  ["fn", FUNCTION],
+  ["let", LET],
+  ["true", TRUE],
+  ["false", FALSE],
+  ["if", IF],
+  ["else", ELSE],
+  ["return", RETURN],
+]);
+
+export const lookupIdent = (ident: string): TokenType =>
+  keywords.get(ident) ?? IDENT;
