@@ -22,6 +22,14 @@ const readChar = (l: Lexer): void => {
   l.readPosition += 1;
 };
 
+const peekChar = (l: Lexer): string => {
+  if (l.readPosition >= l.input.length) {
+    return "";
+  } else {
+    return l.input[l.readPosition];
+  }
+};
+
 const readIdentifier = (l: Lexer): string => {
   const position = l.position;
   while (isLetter(l.ch)) {
@@ -57,7 +65,14 @@ export const nextToken = (l: Lexer): Token.Token => {
   skipWhitespace(l);
   switch (l.ch) {
     case "=":
-      tok = newToken(Token.ASSIGN, l.ch);
+      if (peekChar(l) === "=") {
+        const ch = l.ch;
+        readChar(l);
+        const literal = ch + l.ch;
+        tok = newToken(Token.EQ, literal);
+      } else {
+        tok = newToken(Token.ASSIGN, l.ch);
+      }
       break;
     case ";":
       tok = newToken(Token.SEMICOLON, l.ch);
@@ -90,7 +105,14 @@ export const nextToken = (l: Lexer): Token.Token => {
       tok = newToken(Token.GT, l.ch);
       break;
     case "!":
-      tok = newToken(Token.BANG, l.ch);
+      if (peekChar(l) === "=") {
+        const ch = l.ch;
+        readChar(l);
+        const literal = ch + l.ch;
+        tok = newToken(Token.NOT_EQ, literal);
+      } else {
+        tok = newToken(Token.BANG, l.ch);
+      }
       break;
     case "=":
       tok = newToken(Token.EQ, l.ch);
