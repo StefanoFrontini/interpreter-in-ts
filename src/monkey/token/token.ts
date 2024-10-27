@@ -27,7 +27,7 @@ export type TokenType =
   | "ELSE"
   | "RETURN";
 
-export interface Token {
+export interface t {
   type: TokenType;
   literal: string;
 }

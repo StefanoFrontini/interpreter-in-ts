@@ -1,18 +1,18 @@
 import * as Token from "#root/src/monkey/token/token.ts";
-interface Lexer {
+export interface t {
   input: string;
   position: number;
   readPosition: number;
   ch: string;
 }
 
-export const init = (input: string): Lexer => {
+export const init = (input: string): t => {
   const l = { input, position: 0, readPosition: 0, ch: "" };
   readChar(l);
   return l;
 };
 
-const readChar = (l: Lexer): void => {
+const readChar = (l: t): void => {
   if (l.readPosition >= l.input.length) {
     l.ch = "";
   } else {
@@ -22,7 +22,7 @@ const readChar = (l: Lexer): void => {
   l.readPosition += 1;
 };
 
-const peekChar = (l: Lexer): string => {
+const peekChar = (l: t): string => {
   if (l.readPosition >= l.input.length) {
     return "";
   } else {
@@ -30,7 +30,7 @@ const peekChar = (l: Lexer): string => {
   }
 };
 
-const readIdentifier = (l: Lexer): string => {
+const readIdentifier = (l: t): string => {
   const position = l.position;
   while (isLetter(l.ch)) {
     readChar(l);
@@ -42,13 +42,13 @@ const isLetter = (ch: string): boolean => {
   return ("a" <= ch && ch <= "z") || ("A" <= ch && ch <= "Z") || ch === "_";
 };
 
-const skipWhitespace = (l: Lexer): void => {
+const skipWhitespace = (l: t): void => {
   while (l.ch === " " || l.ch === "\t" || l.ch === "\n" || l.ch === "\r") {
     readChar(l);
   }
 };
 
-const readNumber = (l: Lexer): string => {
+const readNumber = (l: t): string => {
   const position = l.position;
   while (isDigit(l.ch)) {
     readChar(l);
@@ -60,7 +60,12 @@ const isDigit = (ch: string): boolean => {
   return "0" <= ch && ch <= "9";
 };
 
-export const nextToken = (l: Lexer): Token.Token => {
+const newToken = (t: Token.TokenType, l: string): Token.t => ({
+  type: t,
+  literal: l,
+});
+
+export const nextToken = (l: t): Token.t => {
   let tok = newToken(Token.EOF, "");
   skipWhitespace(l);
   switch (l.ch) {
@@ -146,8 +151,3 @@ export const nextToken = (l: Lexer): Token.Token => {
   readChar(l);
   return tok;
 };
-
-const newToken = (t: Token.TokenType, l: string): Token.Token => ({
-  type: t,
-  literal: l,
-});
