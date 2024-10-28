@@ -2,10 +2,10 @@ import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import assert from "node:assert";
 import { describe, it } from "node:test";
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
+import * as Identifier from "#root/src/monkey/ast/identifier.ts";
+import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
-// import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
-import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 
 describe("parser", () => {
   it("TestLetStatements", () => {
@@ -46,21 +46,57 @@ describe("parser", () => {
           stmt
         )}`
       );
+      let letStmt = stmt as LetStatement.t;
+
       assert.notStrictEqual(
-        stmt.name,
+        letStmt.name,
         undefined,
-        `letStmt.name is not defined. got=${stmt.name}`
+        `letStmt.name is not defined. got=${letStmt.name}`
       );
 
       assert.strictEqual(
-        stmt.name.value,
+        letStmt.name.value,
         tt.expectedIdentifier,
-        `letStmt.name.value is not '${tt.expectedIdentifier}'. got=${stmt.name.value}`
+        `letStmt.name.value is not '${tt.expectedIdentifier}'. got=${letStmt.name.value}`
       );
       assert.strictEqual(
-        Identifier.tokenLiteral(stmt.name),
+        Identifier.tokenLiteral(letStmt.name),
         tt.expectedIdentifier,
-        `stmt.name.value is not '${tt.expectedIdentifier}'. got=${stmt.name.value}`
+        `letStmt.name.value is not '${tt.expectedIdentifier}'. got=${letStmt.name.value}`
+      );
+    }
+  });
+  it("TestReturnStatements", () => {
+    const input = `
+        return 5;
+        return 10;
+        return 993322;
+        `;
+    const l = Lexer.init(input);
+    const p = Parser.init(l);
+    const program = Parser.parseProgram(p);
+    assert.strictEqual(
+      p.errors.length,
+      0,
+      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+        "\n"
+      )}`
+    );
+    assert.notStrictEqual(program, null, "Parser.parseProgram() returned null");
+    assert.strictEqual(
+      program.statements.length,
+      3,
+      `
+      program.statements does not contain 3 statements. got=${program.statements.length}`
+    );
+
+    for (const stmt of program.statements) {
+      assert.strictEqual(
+        Statement.tokenLiteral(stmt),
+        "return",
+        `Statement.tokenLiteral is not 'return'. got=${Statement.tokenLiteral(
+          stmt
+        )}`
       );
     }
   });

@@ -1,6 +1,7 @@
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
+import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
@@ -76,10 +77,23 @@ const parseLetStatement = (p: t): LetStatement.t | null => {
   return stmt;
 };
 
+const parseReturnStatement = (p: t): ReturnStatement.t | null => {
+  const stmt: ReturnStatement.t = {
+    token: p.curToken,
+  };
+  nextToken(p);
+  while (!curTokenIs(p, Token.SEMICOLON)) {
+    nextToken(p);
+  }
+  return stmt;
+};
+
 const parseStatement = (p: t): Statement.t | null => {
   switch (p.curToken.type) {
     case Token.LET:
       return parseLetStatement(p);
+    case Token.RETURN:
+      return parseReturnStatement(p);
     default:
       return null;
   }
