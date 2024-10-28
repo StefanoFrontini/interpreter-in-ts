@@ -9,13 +9,22 @@ export interface t {
   l: Lexer.t;
   curToken: Token.t;
   peekToken: Token.t;
+  errors: string[];
 }
+
+const errors = (p: t): string[] => p.errors;
+
+export const peekError = (p: t, tokenType: Token.TokenType): void => {
+  const msg = `expected next token to be ${tokenType}, got ${p.peekToken.type} instead`;
+  p.errors.push(msg);
+};
 
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
     curToken: Lexer.nextToken(l),
     peekToken: Lexer.nextToken(l),
+    errors: [],
   };
   return p;
 };
@@ -38,6 +47,7 @@ const expectedPeek = (p: t, tokenType: Token.TokenType): boolean => {
     nextToken(p);
     return true;
   } else {
+    peekError(p, tokenType);
     return false;
   }
 };

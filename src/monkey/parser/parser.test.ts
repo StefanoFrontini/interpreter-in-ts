@@ -17,6 +17,13 @@ describe("parser", () => {
     const l = Lexer.init(input);
     const p = Parser.init(l);
     const program = Parser.parseProgram(p);
+    assert.strictEqual(
+      p.errors.length,
+      0,
+      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+        "\n"
+      )}`
+    );
     assert.notStrictEqual(program, null, "Parser.parseProgram() returned null");
     assert.strictEqual(
       program?.statements.length,
