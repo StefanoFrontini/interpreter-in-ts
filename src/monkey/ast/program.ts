@@ -1,4 +1,5 @@
 import * as Statement from "#root/src/monkey/ast/statement.ts";
+import { Readable } from "stream";
 export interface t {
   statements: Statement.t[];
 }
@@ -8,4 +9,17 @@ export const tokenLiteral = (p: t): string => {
   } else {
     return "";
   }
+};
+
+export const string = async (p: t): Promise<string> => {
+  const readableStream = Readable.from([""]);
+  for (const s of p.statements) {
+    readableStream.push(await Statement.string(s));
+  }
+  let result = "";
+  for await (const chunk of readableStream) {
+    console.log("chunk", chunk);
+    result += chunk;
+  }
+  return result;
 };
