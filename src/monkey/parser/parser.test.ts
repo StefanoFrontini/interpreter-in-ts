@@ -2,10 +2,12 @@ import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import assert from "node:assert";
 import { describe, it } from "node:test";
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
+import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
+import * as Token from "#root/src/monkey/token/token.ts";
 
 describe("parser", () => {
   it("TestLetStatements", () => {
@@ -118,6 +120,33 @@ describe("parser", () => {
       1,
       `
       program.statements has not enough statements. got=${program.statements.length}`
+    );
+    // const isExpressionStatement = (
+    //   s: Statement.t
+    // ): s is ExpressionStatement.t => s.hasOwnProperty("expression");
+
+    assert.ok(
+      program.statements[0].hasOwnProperty("expression"),
+      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0]}`
+    );
+    const exprStmt = program.statements[0] as ExpressionStatement.t;
+    assert.strictEqual(
+      exprStmt.expression.token.type,
+      Token.IDENT,
+      `exprStmt.expression.token is not 'IDENT'. got=${exprStmt.expression.token.type}`
+    );
+    const ident = exprStmt.expression as Identifier.t;
+    assert.strictEqual(
+      ident.value,
+      "foobar",
+      `ident.value is not 'foobar'. got=${ident.value}`
+    );
+    assert.strictEqual(
+      Identifier.tokenLiteral(ident),
+      "foobar",
+      `ident.tokenLiteral() is not 'foobar'. got=${Identifier.tokenLiteral(
+        ident
+      )}`
     );
   });
 });

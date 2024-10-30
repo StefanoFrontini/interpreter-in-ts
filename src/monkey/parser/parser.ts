@@ -1,5 +1,6 @@
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
+import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
@@ -7,27 +8,36 @@ import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 
+const LOWEST = 1,
+  EQUALS = 2,
+  LESSGREATER = 3,
+  SUM = 4,
+  PRODUCT = 5,
+  PREFIX = 6,
+  CALL = 7;
+
 export interface t {
   l: Lexer.t;
   curToken: Token.t;
   peekToken: Token.t;
   errors: string[];
+  prefixParseFns: Map<Token.TokenType, (p: t) => Expression.t>;
+  infixParseFns: Map<Token.TokenType, (p: t) => Expression.t>;
 }
 
-const prefixParseFns: Map<Token.TokenType, (p: t) => Expression.t> = new Map();
-const infixParseFns: Map<Token.TokenType, (p: t) => Expression.t> = new Map();
-
-export const registerPrefix = (
+const registerPrefix = (
+  p: t,
   tokenType: Token.TokenType,
   fn: (p: t) => Expression.t
 ): void => {
-  prefixParseFns.set(tokenType, fn);
+  p.prefixParseFns.set(tokenType, fn);
 };
-export const registerInfix = (
+const registerInfix = (
+  p: t,
   tokenType: Token.TokenType,
   fn: (p: t) => Expression.t
 ): void => {
-  infixParseFns.set(tokenType, fn);
+  p.infixParseFns.set(tokenType, fn);
 };
 const errors = (p: t): string[] => p.errors;
 
@@ -36,13 +46,23 @@ export const peekError = (p: t, tokenType: Token.TokenType): void => {
   p.errors.push(msg);
 };
 
+const parseIdentifier = (p: t): Expression.t => {
+  return {
+    token: p.curToken,
+    value: p.curToken.literal,
+  };
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
     curToken: Lexer.nextToken(l),
     peekToken: Lexer.nextToken(l),
     errors: [],
+    prefixParseFns: new Map<Token.TokenType, (p: t) => Expression.t>(),
+    infixParseFns: new Map<Token.TokenType, (p: t) => Expression.t>(),
   };
+  registerPrefix(p, Token.IDENT, parseIdentifier);
   return p;
 };
 
@@ -112,6 +132,34 @@ const parseReturnStatement = (p: t): ReturnStatement.t | null => {
   return stmt;
 };
 
+const parseExpression = (p: t, precedence: number): Expression.t | null => {
+  const prefix = p.prefixParseFns.get(p.curToken.type);
+  if (!prefix) return null;
+  const leftExp = prefix(p);
+  // while (
+  //   !curTokenIs(p, Token.SEMICOLON) &&
+  //   precedence < peekPrecedence(p)
+  // ) {
+  //   const infix = infixParseFns.get(p.peekToken.type);
+  //   if (infix) {
+  //     nextToken(p);
+  //     leftExp = infix(p);
+  //   }
+  // }
+  return leftExp;
+};
+
+const parseExpressionStatement = (p: t): ExpressionStatement.t => {
+  const stmt: ExpressionStatement.t = {
+    token: p.curToken,
+    expression: parseExpression(p, LOWEST),
+  };
+  if (peekTokenIs(p, Token.SEMICOLON)) {
+    nextToken(p);
+  }
+  return stmt;
+};
+
 const parseStatement = (p: t): Statement.t | null => {
   switch (p.curToken.type) {
     case Token.LET:
@@ -119,7 +167,7 @@ const parseStatement = (p: t): Statement.t | null => {
     case Token.RETURN:
       return parseReturnStatement(p);
     default:
-      return null;
+      return parseExpressionStatement(p);
   }
 };
 

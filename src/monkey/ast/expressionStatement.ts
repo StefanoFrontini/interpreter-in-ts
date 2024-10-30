@@ -7,13 +7,9 @@ export interface t {
 
 export const tokenLiteral = (e: t): string => e.token.literal;
 
-export const string = (e: t): string => {
-  //   if (e.expression !== null) {
-  //     return e.expression.string();
-  //   }
-  return "";
-  //   const readableStream = new Readable({ encoding: "utf-8" });
-  //   readableStream.push(Expression.string(e.expression));
-  //   readableStream.push(";");
-  //   return readableStream;
+export const string = (e: t): Promise<string> => {
+  if (e.expression !== null) {
+    return Expression.string(e.expression);
+  }
+  return Promise.resolve("");
 };
