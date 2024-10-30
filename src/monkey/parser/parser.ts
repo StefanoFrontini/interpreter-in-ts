@@ -1,6 +1,7 @@
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
+import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
@@ -46,6 +47,14 @@ export const peekError = (p: t, tokenType: Token.TokenType): void => {
   p.errors.push(msg);
 };
 
+const parseIntegerLiteral = (p: t): Expression.t => {
+  const lit: IntegerLiteral.t = {
+    token: p.curToken,
+    value: Number(p.curToken.literal),
+  };
+  return lit;
+};
+
 const parseIdentifier = (p: t): Expression.t => {
   return {
     token: p.curToken,
@@ -63,6 +72,7 @@ export const init = (l: Lexer.t): t => {
     infixParseFns: new Map<Token.TokenType, (p: t) => Expression.t>(),
   };
   registerPrefix(p, Token.IDENT, parseIdentifier);
+  registerPrefix(p, Token.INT, parseIntegerLiteral);
   return p;
 };
 
