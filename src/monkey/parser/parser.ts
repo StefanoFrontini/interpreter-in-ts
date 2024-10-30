@@ -1,4 +1,5 @@
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
+import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
@@ -13,6 +14,21 @@ export interface t {
   errors: string[];
 }
 
+const prefixParseFns: Map<Token.TokenType, (p: t) => Expression.t> = new Map();
+const infixParseFns: Map<Token.TokenType, (p: t) => Expression.t> = new Map();
+
+export const registerPrefix = (
+  tokenType: Token.TokenType,
+  fn: (p: t) => Expression.t
+): void => {
+  prefixParseFns.set(tokenType, fn);
+};
+export const registerInfix = (
+  tokenType: Token.TokenType,
+  fn: (p: t) => Expression.t
+): void => {
+  infixParseFns.set(tokenType, fn);
+};
 const errors = (p: t): string[] => p.errors;
 
 export const peekError = (p: t, tokenType: Token.TokenType): void => {
@@ -60,6 +76,10 @@ const parseLetStatement = (p: t): LetStatement.t | null => {
       token: p.curToken,
       value: p.curToken.literal,
     },
+    value: {
+      token: p.curToken,
+      value: p.curToken.literal,
+    },
   };
   if (!expectedPeek(p, Token.IDENT)) {
     return null;
@@ -80,6 +100,10 @@ const parseLetStatement = (p: t): LetStatement.t | null => {
 const parseReturnStatement = (p: t): ReturnStatement.t | null => {
   const stmt: ReturnStatement.t = {
     token: p.curToken,
+    returnValue: {
+      token: p.curToken,
+      value: p.curToken.literal,
+    },
   };
   nextToken(p);
   while (!curTokenIs(p, Token.SEMICOLON)) {
