@@ -3,6 +3,7 @@ import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
+import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
@@ -62,6 +63,17 @@ const parseIdentifier = (p: t): Expression.t => {
   };
 };
 
+const parsePrefixExpression = (p: t): Expression.t => {
+  const expression = {
+    token: p.curToken,
+    operator: p.curToken.literal,
+  };
+
+  nextToken(p);
+  expression["right"] = parseExpression(p, PREFIX);
+  return expression as PrefixExpression.t;
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -73,6 +85,8 @@ export const init = (l: Lexer.t): t => {
   };
   registerPrefix(p, Token.IDENT, parseIdentifier);
   registerPrefix(p, Token.INT, parseIntegerLiteral);
+  registerPrefix(p, Token.BANG, parsePrefixExpression);
+  registerPrefix(p, Token.MINUS, parsePrefixExpression);
   return p;
 };
 
@@ -142,9 +156,17 @@ const parseReturnStatement = (p: t): ReturnStatement.t | null => {
   return stmt;
 };
 
+const noPrefixParseFnError = (p: t, t: Token.TokenType): void => {
+  const msg = `no prefix parse function for ${t} found`;
+  p.errors.push(msg);
+};
+
 const parseExpression = (p: t, precedence: number): Expression.t | null => {
   const prefix = p.prefixParseFns.get(p.curToken.type);
-  if (!prefix) return null;
+  if (!prefix) {
+    noPrefixParseFnError(p, p.curToken.type);
+    return null;
+  }
   const leftExp = prefix(p);
   // while (
   //   !curTokenIs(p, Token.SEMICOLON) &&

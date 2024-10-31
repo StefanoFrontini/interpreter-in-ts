@@ -6,6 +6,7 @@ import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.t
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
+import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
@@ -185,5 +186,76 @@ describe("parser", () => {
       5,
       `literal.value is not '5'. got=${literal.value}`
     );
+  });
+  it("TestParsingPrefixExpressions", () => {
+    const prefixTests = [
+      {
+        input: "!5;",
+        operator: "!",
+        value: 5,
+      },
+      {
+        input: "-15;",
+        operator: "-",
+        value: 15,
+      },
+    ];
+    for (const tt of prefixTests) {
+      const l = Lexer.init(tt.input);
+      const p = Parser.init(l);
+      const program = Parser.parseProgram(p);
+      assert.strictEqual(
+        p.errors.length,
+        0,
+        `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+          "\n"
+        )}`
+      );
+      assert.notStrictEqual(
+        program,
+        null,
+        "Parser.parseProgram() returned null"
+      );
+      assert.strictEqual(
+        program.statements.length,
+        1,
+        `
+        program.statements does not contain 1 statement. got=${program.statements.length}`
+      );
+      assert.ok(
+        program.statements[0].hasOwnProperty("expression"),
+        `
+      program.statements[0] is not an ExpressionStatement. got=${program.statements[0]}`
+      );
+      const exprStmt = program.statements[0] as ExpressionStatement.t;
+      assert.ok(
+        exprStmt.expression.hasOwnProperty("operator"),
+        `exprStmt.expression is not a Prefix Expression. got=${exprStmt.expression}`
+      );
+      const exp = exprStmt.expression as PrefixExpression.t;
+      assert.strictEqual(
+        exp.operator,
+        tt.operator,
+        `exp.operator is not '${tt.operator}'. got=${exp.operator}`
+      );
+      assert.strictEqual(
+        exp.right.token.type,
+        Token.INT,
+        `exp.right.token is not 'INT'. got=${exp.right.token.type}`
+      );
+      const intLiteral = exp.right as IntegerLiteral.t;
+      assert.strictEqual(
+        intLiteral.value,
+        tt.value,
+        `intLiteral.value is not '${tt.value}'. got=${intLiteral.value}`
+      );
+      assert.strictEqual(
+        IntegerLiteral.tokenLiteral(intLiteral),
+        tt.value.toString(),
+        `intLiteral.tokenLiteral() is not '${
+          tt.value
+        }'. got=${IntegerLiteral.tokenLiteral(intLiteral)}`
+      );
+    }
   });
 });
