@@ -65,6 +65,7 @@ const parseIdentifier = (p: t): Expression.t => {
 
 const parsePrefixExpression = (p: t): Expression.t => {
   const expression = {
+    _tag: "PrefixExpression",
     token: p.curToken,
     operator: p.curToken.literal,
   };

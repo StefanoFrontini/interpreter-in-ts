@@ -228,8 +228,9 @@ describe("parser", () => {
       program.statements[0] is not an ExpressionStatement. got=${program.statements[0]}`
       );
       const exprStmt = program.statements[0] as ExpressionStatement.t;
-      assert.ok(
-        exprStmt.expression.hasOwnProperty("operator"),
+      assert.strictEqual(
+        exprStmt.expression["_tag"],
+        "PrefixExpression",
         `exprStmt.expression is not a Prefix Expression. got=${exprStmt.expression}`
       );
       const exp = exprStmt.expression as PrefixExpression.t;
@@ -254,6 +255,134 @@ describe("parser", () => {
         tt.value.toString(),
         `intLiteral.tokenLiteral() is not '${
           tt.value
+        }'. got=${IntegerLiteral.tokenLiteral(intLiteral)}`
+      );
+    }
+  });
+  it("TestParsingInfixExpressions", () => {
+    const infixTests = [
+      {
+        input: "5 + 5;",
+        leftValue: 5,
+        operator: "+",
+        rightValue: 5,
+      },
+      {
+        input: "5 - 5;",
+        leftValue: 5,
+        operator: "-",
+        rightValue: 5,
+      },
+      {
+        input: "5 * 5;",
+        leftValue: 5,
+        operator: "*",
+        rightValue: 5,
+      },
+      {
+        input: "5 / 5;",
+        leftValue: 5,
+        operator: "/",
+        rightValue: 5,
+      },
+      {
+        input: "5 > 5;",
+        leftValue: 5,
+        operator: ">",
+        rightValue: 5,
+      },
+      {
+        input: "5 < 5;",
+        leftValue: 5,
+        operator: "<",
+        rightValue: 5,
+      },
+      {
+        input: "5 == 5;",
+        leftValue: 5,
+        operator: "==",
+        rightValue: 5,
+      },
+      {
+        input: "5 != 5;",
+        leftValue: 5,
+        operator: "!=",
+        rightValue: 5,
+      },
+    ];
+    for (const tt of infixTests) {
+      const l = Lexer.init(tt.input);
+      const p = Parser.init(l);
+      const program = Parser.parseProgram(p);
+      assert.strictEqual(
+        p.errors.length,
+        0,
+        `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+          "\n"
+        )}`
+      );
+      assert.notStrictEqual(
+        program,
+        null,
+        "Parser.parseProgram() returned null"
+      );
+      assert.strictEqual(
+        program.statements.length,
+        1,
+        `
+        program.statements does not contain 1 statement. got=${program.statements.length}`
+      );
+      assert.ok(
+        program.statements[0].hasOwnProperty("expression"),
+        `
+      program.statements[0] is not an ExpressionStatement. got=${program.statements[0]}`
+      );
+      const exprStmt = program.statements[0] as ExpressionStatement.t;
+      assert.strictEqual(
+        exprStmt.expression["_tag"],
+        "InfixExpression",
+        `exprStmt.expression is not an Infix Expression. got=${exprStmt.expression}`
+      );
+      const exp = exprStmt.expression as InfixExpression.t;
+      assert.strictEqual(
+        exp.operator,
+        tt.operator,
+        `exp.operator is not '${tt.operator}'. got=${exp.operator}`
+      );
+      assert.strictEqual(
+        exp.left.token.type,
+        Token.INT,
+        `exp.left.token is not 'INT'. got=${exp.left.token.type}`
+      );
+      const intLiteral = exp.left as IntegerLiteral.t;
+      assert.strictEqual(
+        intLiteral.value,
+        tt.leftValue,
+        `intLiteral.value is not '${tt.leftValue}'. got=${intLiteral.value}`
+      );
+      assert.strictEqual(
+        IntegerLiteral.tokenLiteral(intLiteral),
+        tt.leftValue.toString(),
+        `intLiteral.tokenLiteral() is not '${
+          tt.leftValue
+        }'. got=${IntegerLiteral.tokenLiteral(intLiteral)}`
+      );
+      assert.strictEqual(
+        exp.right.token.type,
+        Token.INT,
+        `exp.right.token is not 'INT'. got=${exp.right.token.type}`
+      );
+      const intLiteral = exp.right as IntegerLiteral.t;
+      assert.strictEqual(
+        intLiteral.value,
+        tt.rightValue,
+        `intLiteral.value is not '${tt.rightValue}'. got=${intLiteral.value}`
+      );
+      assert.strictEqual(
+        IntegerLiteral.tokenLiteral(intLiteral),
+        tt.rightValue.toString(),
+        `intLiteral.tokenLiteral() is not '${
+          tt.rightValue
         }'. got=${IntegerLiteral.tokenLiteral(intLiteral)}`
       );
     }
