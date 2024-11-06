@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
+import * as InfixExpression from "#root/src/monkey/ast/infixExpression.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
@@ -345,45 +346,45 @@ describe("parser", () => {
       );
       const exp = exprStmt.expression as InfixExpression.t;
       assert.strictEqual(
-        exp.operator,
-        tt.operator,
-        `exp.operator is not '${tt.operator}'. got=${exp.operator}`
-      );
-      assert.strictEqual(
         exp.left.token.type,
         Token.INT,
         `exp.left.token is not 'INT'. got=${exp.left.token.type}`
       );
-      const intLiteral = exp.left as IntegerLiteral.t;
+      const intLiteralLeft = exp.left as IntegerLiteral.t;
       assert.strictEqual(
-        intLiteral.value,
+        intLiteralLeft.value,
         tt.leftValue,
-        `intLiteral.value is not '${tt.leftValue}'. got=${intLiteral.value}`
+        `intLiteral.value is not '${tt.leftValue}'. got=${intLiteralLeft.value}`
       );
       assert.strictEqual(
-        IntegerLiteral.tokenLiteral(intLiteral),
+        IntegerLiteral.tokenLiteral(intLiteralLeft),
         tt.leftValue.toString(),
         `intLiteral.tokenLiteral() is not '${
           tt.leftValue
-        }'. got=${IntegerLiteral.tokenLiteral(intLiteral)}`
+        }'. got=${IntegerLiteral.tokenLiteral(intLiteralLeft)}`
+      );
+      assert.strictEqual(
+        exp.operator,
+        tt.operator,
+        `exp.operator is not '${tt.operator}'. got=${exp.operator}`
       );
       assert.strictEqual(
         exp.right.token.type,
         Token.INT,
         `exp.right.token is not 'INT'. got=${exp.right.token.type}`
       );
-      const intLiteral = exp.right as IntegerLiteral.t;
+      const intLiteralRight = exp.right as IntegerLiteral.t;
       assert.strictEqual(
-        intLiteral.value,
+        intLiteralRight.value,
         tt.rightValue,
-        `intLiteral.value is not '${tt.rightValue}'. got=${intLiteral.value}`
+        `intLiteral.value is not '${tt.rightValue}'. got=${intLiteralRight.value}`
       );
       assert.strictEqual(
-        IntegerLiteral.tokenLiteral(intLiteral),
+        IntegerLiteral.tokenLiteral(intLiteralRight),
         tt.rightValue.toString(),
         `intLiteral.tokenLiteral() is not '${
           tt.rightValue
-        }'. got=${IntegerLiteral.tokenLiteral(intLiteral)}`
+        }'. got=${IntegerLiteral.tokenLiteral(intLiteralRight)}`
       );
     }
   });

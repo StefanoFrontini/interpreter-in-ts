@@ -18,14 +18,38 @@ const LOWEST = 1,
   PREFIX = 6,
   CALL = 7;
 
+const precedences = new Map<Token.TokenType, number>([
+  [Token.EQ, EQUALS],
+  [Token.NOT_EQ, EQUALS],
+  [Token.LT, LESSGREATER],
+  [Token.GT, LESSGREATER],
+  [Token.PLUS, SUM],
+  [Token.MINUS, SUM],
+  [Token.SLASH, PRODUCT],
+  [Token.ASTERISK, PRODUCT],
+]);
+
 export interface t {
   l: Lexer.t;
   curToken: Token.t;
   peekToken: Token.t;
   errors: string[];
   prefixParseFns: Map<Token.TokenType, (p: t) => Expression.t>;
-  infixParseFns: Map<Token.TokenType, (p: t) => Expression.t>;
+  infixParseFns: Map<
+    Token.TokenType,
+    (p: t, left: Expression.t) => Expression.t
+  >;
 }
+
+const peekPrecedence = (p: t): number => {
+  if (!p.peekToken) return LOWEST;
+  return precedences.get(p.peekToken.type) ?? LOWEST;
+};
+
+const curPrecedence = (p: t): number => {
+  if (!p.curToken) return LOWEST;
+  return precedences.get(p.curToken.type) ?? LOWEST;
+};
 
 const registerPrefix = (
   p: t,
@@ -37,7 +61,7 @@ const registerPrefix = (
 const registerInfix = (
   p: t,
   tokenType: Token.TokenType,
-  fn: (p: t) => Expression.t
+  fn: (p: t, left: Expression.t) => Expression.t
 ): void => {
   p.infixParseFns.set(tokenType, fn);
 };
@@ -75,6 +99,19 @@ const parsePrefixExpression = (p: t): Expression.t => {
   return expression as PrefixExpression.t;
 };
 
+const parseInfixExpression = (p: t, left: Expression.t): Expression.t => {
+  const expression = {
+    _tag: "InfixExpression",
+    token: p.curToken,
+    operator: p.curToken.literal,
+    left: left,
+  };
+  const precedence = curPrecedence(p);
+  nextToken(p);
+  expression["right"] = parseExpression(p, precedence);
+  return expression as Expression.t;
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -82,12 +119,23 @@ export const init = (l: Lexer.t): t => {
     peekToken: Lexer.nextToken(l),
     errors: [],
     prefixParseFns: new Map<Token.TokenType, (p: t) => Expression.t>(),
-    infixParseFns: new Map<Token.TokenType, (p: t) => Expression.t>(),
+    infixParseFns: new Map<
+      Token.TokenType,
+      (p: t, left: Expression.t) => Expression.t
+    >(),
   };
   registerPrefix(p, Token.IDENT, parseIdentifier);
   registerPrefix(p, Token.INT, parseIntegerLiteral);
   registerPrefix(p, Token.BANG, parsePrefixExpression);
   registerPrefix(p, Token.MINUS, parsePrefixExpression);
+  registerInfix(p, Token.PLUS, parseInfixExpression);
+  registerInfix(p, Token.MINUS, parseInfixExpression);
+  registerInfix(p, Token.SLASH, parseInfixExpression);
+  registerInfix(p, Token.ASTERISK, parseInfixExpression);
+  registerInfix(p, Token.EQ, parseInfixExpression);
+  registerInfix(p, Token.NOT_EQ, parseInfixExpression);
+  registerInfix(p, Token.LT, parseInfixExpression);
+  registerInfix(p, Token.GT, parseInfixExpression);
   return p;
 };
 
@@ -168,29 +216,28 @@ const parseExpression = (p: t, precedence: number): Expression.t | null => {
     noPrefixParseFnError(p, p.curToken.type);
     return null;
   }
-  const leftExp = prefix(p);
-  // while (
-  //   !curTokenIs(p, Token.SEMICOLON) &&
-  //   precedence < peekPrecedence(p)
-  // ) {
-  //   const infix = infixParseFns.get(p.peekToken.type);
-  //   if (infix) {
-  //     nextToken(p);
-  //     leftExp = infix(p);
-  //   }
-  // }
+  let leftExp = prefix(p);
+
+  while (!peekTokenIs(p, Token.SEMICOLON) && precedence < peekPrecedence(p)) {
+    const infix = p.infixParseFns.get(p.peekToken.type);
+    if (!infix) {
+      return leftExp;
+    }
+    nextToken(p);
+    leftExp = infix(p, leftExp);
+  }
   return leftExp;
 };
 
 const parseExpressionStatement = (p: t): ExpressionStatement.t => {
-  const stmt: ExpressionStatement.t = {
+  const stmt = {
     token: p.curToken,
     expression: parseExpression(p, LOWEST),
   };
   if (peekTokenIs(p, Token.SEMICOLON)) {
     nextToken(p);
   }
-  return stmt;
+  return stmt as ExpressionStatement.t;
 };
 
 const parseStatement = (p: t): Statement.t | null => {
