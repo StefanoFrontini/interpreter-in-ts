@@ -18,6 +18,14 @@ const isIntegerLiteral = (e: t): e is IntegerLiteral.t => {
   return e.token.type === "INT";
 };
 
+const isPrefixExpression = (e: t): e is PrefixExpression.t => {
+  return e["_tag"] === "PrefixExpression";
+};
+
+const isInfixExpression = (e: t): e is InfixExpression.t => {
+  return e["_tag"] === "InfixExpression";
+};
+
 export const string = async (e: t): Promise<string> => {
   let stringExpr = "";
   if (isIdentifer(e)) {
@@ -25,6 +33,12 @@ export const string = async (e: t): Promise<string> => {
   }
   if (isIntegerLiteral(e)) {
     stringExpr = IntegerLiteral.string(e);
+  }
+  if (isPrefixExpression(e)) {
+    stringExpr = await PrefixExpression.string(e);
+  }
+  if (isInfixExpression(e)) {
+    stringExpr = await InfixExpression.string(e);
   }
   const readableStream = Readable.from([""]);
   readableStream.push(stringExpr);

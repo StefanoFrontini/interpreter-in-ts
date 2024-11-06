@@ -18,7 +18,6 @@ export const string = async (p: t): Promise<string> => {
   }
   let result = "";
   for await (const chunk of readableStream) {
-    console.log("chunk", chunk);
     result += chunk;
   }
   return result;

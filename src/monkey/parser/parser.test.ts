@@ -1,3 +1,4 @@
+import * as Program from "#root/src/monkey/ast/program.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import assert from "node:assert";
 import { describe, it } from "node:test";
@@ -385,6 +386,78 @@ describe("parser", () => {
         `intLiteral.tokenLiteral() is not '${
           tt.rightValue
         }'. got=${IntegerLiteral.tokenLiteral(intLiteralRight)}`
+      );
+    }
+  });
+  it("TestOperatorPrecedenceParsing", async () => {
+    const tests = [
+      {
+        input: "-a * b",
+        expected: "((-a) * b)",
+      },
+      {
+        input: "!-a",
+        expected: "(!(-a))",
+      },
+      {
+        input: "a + b + c",
+        expected: "((a + b) + c)",
+      },
+      {
+        input: "a + b - c",
+        expected: "((a + b) - c)",
+      },
+      {
+        input: "a * b * c",
+        expected: "((a * b) * c)",
+      },
+      {
+        input: "a * b / c",
+        expected: "((a * b) / c)",
+      },
+      {
+        input: "a + b / c",
+        expected: "(a + (b / c))",
+      },
+      {
+        input: "a + b * c + d / e - f",
+        expected: "(((a + (b * c)) + (d / e)) - f)",
+      },
+      {
+        input: "3 + 4; -5 * 5",
+        expected: "(3 + 4)((-5) * 5)",
+      },
+      {
+        input: "5 > 4 == 3 < 4",
+        expected: "((5 > 4) == (3 < 4))",
+      },
+      {
+        input: "5 < 4 != 3 > 4",
+        expected: "((5 < 4) != (3 > 4))",
+      },
+      {
+        input: "3 + 4 * 5 == 3 * 1 + 4 * 5",
+        expected: "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+      },
+    ];
+
+    for (const tt of tests) {
+      const l = Lexer.init(tt.input);
+      const p = Parser.init(l);
+      const program = Parser.parseProgram(p);
+      assert.strictEqual(
+        p.errors.length,
+        0,
+        `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+          "\n"
+        )}`
+      );
+      assert.strictEqual(
+        await Program.string(program),
+        tt.expected,
+        `Parser.parseProgram() returned incorrect program. expected=${
+          tt.expected
+        }, got=${await Program.string(program)}`
       );
     }
   });
