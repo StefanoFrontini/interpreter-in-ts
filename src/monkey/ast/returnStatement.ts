@@ -2,6 +2,7 @@ import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 import { Readable } from "node:stream";
 export interface t {
+  _tag: "returnStatement";
   token: Token.t;
   returnValue: Identifier.t;
 }

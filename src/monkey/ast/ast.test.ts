@@ -8,12 +8,15 @@ describe("ast", () => {
     const program: Program.t = {
       statements: [
         {
+          _tag: "letStatement",
           token: { type: Token.LET, literal: "let" },
           name: {
+            _tag: "identifier",
             token: { type: Token.IDENT, literal: "myVar" },
             value: "myVar",
           },
           value: {
+            _tag: "identifier",
             token: { type: Token.ASSIGN, literal: "anotherVar" },
             value: "anotherVar",
           },

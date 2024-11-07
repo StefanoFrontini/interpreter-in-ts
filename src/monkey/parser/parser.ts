@@ -74,6 +74,7 @@ export const peekError = (p: t, tokenType: Token.TokenType): void => {
 
 const parseIntegerLiteral = (p: t): Expression.t => {
   const lit: IntegerLiteral.t = {
+    _tag: "integerLiteral",
     token: p.curToken,
     value: Number(p.curToken.literal),
   };
@@ -82,6 +83,7 @@ const parseIntegerLiteral = (p: t): Expression.t => {
 
 const parseIdentifier = (p: t): Expression.t => {
   return {
+    _tag: "identifier",
     token: p.curToken,
     value: p.curToken.literal,
   };
@@ -89,7 +91,7 @@ const parseIdentifier = (p: t): Expression.t => {
 
 const parsePrefixExpression = (p: t): Expression.t => {
   const expression = {
-    _tag: "PrefixExpression",
+    _tag: "prefixExpression",
     token: p.curToken,
     operator: p.curToken.literal,
   };
@@ -101,7 +103,7 @@ const parsePrefixExpression = (p: t): Expression.t => {
 
 const parseInfixExpression = (p: t, left: Expression.t): Expression.t => {
   const expression = {
-    _tag: "InfixExpression",
+    _tag: "infixExpression",
     token: p.curToken,
     operator: p.curToken.literal,
     left: left,
@@ -163,12 +165,8 @@ const expectedPeek = (p: t, tokenType: Token.TokenType): boolean => {
 };
 
 const parseLetStatement = (p: t): LetStatement.t | null => {
-  let stmt: LetStatement.t = {
+  let stmt = {
     token: p.curToken,
-    name: {
-      token: p.curToken,
-      value: p.curToken.literal,
-    },
     value: {
       token: p.curToken,
       value: p.curToken.literal,
@@ -177,7 +175,7 @@ const parseLetStatement = (p: t): LetStatement.t | null => {
   if (!expectedPeek(p, Token.IDENT)) {
     return null;
   }
-  stmt.name = {
+  stmt["name"] = {
     token: p.curToken,
     value: p.curToken.literal,
   };
@@ -187,13 +185,15 @@ const parseLetStatement = (p: t): LetStatement.t | null => {
   while (!curTokenIs(p, Token.SEMICOLON)) {
     nextToken(p);
   }
-  return stmt;
+  return stmt as LetStatement.t;
 };
 
 const parseReturnStatement = (p: t): ReturnStatement.t | null => {
   const stmt: ReturnStatement.t = {
+    _tag: "returnStatement",
     token: p.curToken,
     returnValue: {
+      _tag: "identifier",
       token: p.curToken,
       value: p.curToken.literal,
     },
@@ -230,7 +230,8 @@ const parseExpression = (p: t, precedence: number): Expression.t | null => {
 };
 
 const parseExpressionStatement = (p: t): ExpressionStatement.t => {
-  const stmt = {
+  let stmt = {
+    _tag: "expressionStatement",
     token: p.curToken,
     expression: parseExpression(p, LOWEST),
   };

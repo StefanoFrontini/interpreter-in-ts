@@ -6,16 +6,16 @@ export type t = LetStatement.t | ReturnStatement.t | ExpressionStatement.t;
 
 export const tokenLiteral = (s: t): string => s.token.literal;
 
-const isLetStatement = (s: t): s is LetStatement.t => {
-  return s.token.literal === "let";
+export const string = async (s: t): Promise<string> => {
+  switch (s["_tag"]) {
+    case "letStatement":
+      return LetStatement.string(s);
+    case "returnStatement":
+      return await ReturnStatement.string(s);
+    case "expressionStatement":
+      return await ExpressionStatement.string(s);
+    default:
+      const _exhaustiveCheck: never = s;
+      return _exhaustiveCheck;
+  }
 };
-const isReturnStatement = (s: t): s is ReturnStatement.t => {
-  return s.token.literal === "return";
-};
-
-export const string = async (s: t): Promise<string> =>
-  isLetStatement(s)
-    ? await LetStatement.string(s)
-    : isReturnStatement(s)
-    ? await ReturnStatement.string(s)
-    : ExpressionStatement.string(s);

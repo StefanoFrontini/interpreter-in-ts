@@ -2,7 +2,7 @@ import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 import { Readable } from "stream";
 export interface t {
-  _tag: "PrefixExpression";
+  _tag: "prefixExpression";
   token: Token.t;
   operator: string;
   right: Expression.t;

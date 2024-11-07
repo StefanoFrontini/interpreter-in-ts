@@ -1,4 +1,3 @@
-import * as Program from "#root/src/monkey/ast/program.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import assert from "node:assert";
 import { describe, it } from "node:test";
@@ -9,6 +8,7 @@ import * as InfixExpression from "#root/src/monkey/ast/infixExpression.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
+import * as Program from "#root/src/monkey/ast/program.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
@@ -232,7 +232,7 @@ describe("parser", () => {
       const exprStmt = program.statements[0] as ExpressionStatement.t;
       assert.strictEqual(
         exprStmt.expression["_tag"],
-        "PrefixExpression",
+        "prefixExpression",
         `exprStmt.expression is not a Prefix Expression. got=${exprStmt.expression}`
       );
       const exp = exprStmt.expression as PrefixExpression.t;
@@ -342,7 +342,7 @@ describe("parser", () => {
       const exprStmt = program.statements[0] as ExpressionStatement.t;
       assert.strictEqual(
         exprStmt.expression["_tag"],
-        "InfixExpression",
+        "infixExpression",
         `exprStmt.expression is not an Infix Expression. got=${exprStmt.expression}`
       );
       const exp = exprStmt.expression as InfixExpression.t;

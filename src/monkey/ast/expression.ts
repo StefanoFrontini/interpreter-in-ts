@@ -10,35 +10,24 @@ export type t =
   | PrefixExpression.t
   | InfixExpression.t;
 
-const isIdentifer = (e: t): e is Identifier.t => {
-  return e.token.type === "IDENT";
-};
-
-const isIntegerLiteral = (e: t): e is IntegerLiteral.t => {
-  return e.token.type === "INT";
-};
-
-const isPrefixExpression = (e: t): e is PrefixExpression.t => {
-  return e["_tag"] === "PrefixExpression";
-};
-
-const isInfixExpression = (e: t): e is InfixExpression.t => {
-  return e["_tag"] === "InfixExpression";
-};
-
 export const string = async (e: t): Promise<string> => {
   let stringExpr = "";
-  if (isIdentifer(e)) {
-    stringExpr = Identifier.string(e);
-  }
-  if (isIntegerLiteral(e)) {
-    stringExpr = IntegerLiteral.string(e);
-  }
-  if (isPrefixExpression(e)) {
-    stringExpr = await PrefixExpression.string(e);
-  }
-  if (isInfixExpression(e)) {
-    stringExpr = await InfixExpression.string(e);
+  switch (e["_tag"]) {
+    case "prefixExpression":
+      stringExpr = await PrefixExpression.string(e);
+      break;
+    case "infixExpression":
+      stringExpr = await InfixExpression.string(e);
+      break;
+    case "integerLiteral":
+      stringExpr = IntegerLiteral.string(e);
+      break;
+    case "identifier":
+      stringExpr = Identifier.string(e);
+      break;
+    default:
+      const _exhaustiveCheck: never = e;
+      return _exhaustiveCheck;
   }
   const readableStream = Readable.from([""]);
   readableStream.push(stringExpr);
