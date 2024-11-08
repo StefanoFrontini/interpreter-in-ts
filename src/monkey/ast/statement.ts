@@ -7,7 +7,7 @@ export type t = LetStatement.t | ReturnStatement.t | ExpressionStatement.t;
 export const tokenLiteral = (s: t): string => s.token.literal;
 
 export const string = async (s: t): Promise<string> => {
-  switch (s["_tag"]) {
+  switch (s["tag"]) {
     case "letStatement":
       return LetStatement.string(s);
     case "returnStatement":

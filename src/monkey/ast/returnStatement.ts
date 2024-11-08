@@ -1,11 +1,11 @@
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 import { Readable } from "node:stream";
-export interface t {
-  _tag: "returnStatement";
+export type t = {
+  tag: "returnStatement";
   token: Token.t;
   returnValue: Identifier.t;
-}
+};
 export const tokenLiteral = (r: t): string => r.token.literal;
 
 export const string = async (r: t): Promise<string> => {

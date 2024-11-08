@@ -1,13 +1,13 @@
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 import { Readable } from "node:stream";
-export interface t {
-  _tag: "infixExpression";
+export type t = {
+  tag: "infixExpression";
   token: Token.t;
   left: Expression.t;
   operator: string;
   right: Expression.t;
-}
+};
 
 export const tokenLiteral = (i: t): string => i.token.literal;
 

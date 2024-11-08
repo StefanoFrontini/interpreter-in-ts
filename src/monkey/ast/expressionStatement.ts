@@ -1,10 +1,10 @@
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
-export interface t {
-  _tag: "expressionStatement";
+export type t = {
+  tag: "expressionStatement";
   token: Token.t;
   expression: Expression.t;
-}
+};
 
 export const tokenLiteral = (e: t): string => e.token.literal;
 

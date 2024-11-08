@@ -1,9 +1,9 @@
 import * as Token from "#root/src/monkey/token/token.ts";
-export interface t {
-  _tag: "integerLiteral";
+export type t = {
+  tag: "integerLiteral";
   token: Token.t;
   value: number;
-}
+};
 
 export const tokenLiteral = (i: t): string => i.token.literal;
 

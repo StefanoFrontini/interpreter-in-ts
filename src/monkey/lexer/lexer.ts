@@ -1,10 +1,10 @@
 import * as Token from "#root/src/monkey/token/token.ts";
-export interface t {
+export type t = {
   input: string;
   position: number;
   readPosition: number;
   ch: string;
-}
+};
 
 export const init = (input: string): t => {
   const l = { input, position: 0, readPosition: 0, ch: "" };

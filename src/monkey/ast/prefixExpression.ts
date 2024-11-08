@@ -1,12 +1,12 @@
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 import { Readable } from "stream";
-export interface t {
-  _tag: "prefixExpression";
+export type t = {
+  tag: "prefixExpression";
   token: Token.t;
   operator: string;
   right: Expression.t;
-}
+};
 
 export const tokenLiteral = (p: t): string => p.token.literal;
 

@@ -27,10 +27,10 @@ export type TokenType =
   | "ELSE"
   | "RETURN";
 
-export interface t {
+export type t = {
   type: TokenType;
   literal: string;
-}
+};
 export const ILLEGAL = "ILLEGAL",
   EOF = "EOF",
   // Identifiers + literals

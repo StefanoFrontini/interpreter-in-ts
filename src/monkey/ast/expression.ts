@@ -12,7 +12,7 @@ export type t =
 
 export const string = async (e: t): Promise<string> => {
   let stringExpr = "";
-  switch (e["_tag"]) {
+  switch (e["tag"]) {
     case "prefixExpression":
       stringExpr = await PrefixExpression.string(e);
       break;

@@ -1,8 +1,8 @@
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import { Readable } from "stream";
-export interface t {
+export type t = {
   statements: Statement.t[];
-}
+};
 export const tokenLiteral = (p: t): string => {
   if (p.statements.length > 0) {
     return Statement.tokenLiteral(p.statements[0]);

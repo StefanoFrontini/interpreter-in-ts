@@ -29,7 +29,7 @@ const precedences = new Map<Token.TokenType, number>([
   [Token.ASTERISK, PRODUCT],
 ]);
 
-export interface t {
+export type t = {
   l: Lexer.t;
   curToken: Token.t;
   peekToken: Token.t;
@@ -39,7 +39,7 @@ export interface t {
     Token.TokenType,
     (p: t, left: Expression.t) => Expression.t
   >;
-}
+};
 
 const peekPrecedence = (p: t): number => {
   if (!p.peekToken) return LOWEST;
@@ -74,7 +74,7 @@ export const peekError = (p: t, tokenType: Token.TokenType): void => {
 
 const parseIntegerLiteral = (p: t): Expression.t => {
   const lit: IntegerLiteral.t = {
-    _tag: "integerLiteral",
+    tag: "integerLiteral",
     token: p.curToken,
     value: Number(p.curToken.literal),
   };
@@ -83,7 +83,7 @@ const parseIntegerLiteral = (p: t): Expression.t => {
 
 const parseIdentifier = (p: t): Expression.t => {
   return {
-    _tag: "identifier",
+    tag: "identifier",
     token: p.curToken,
     value: p.curToken.literal,
   };
@@ -91,7 +91,7 @@ const parseIdentifier = (p: t): Expression.t => {
 
 const parsePrefixExpression = (p: t): Expression.t => {
   const expression = {
-    _tag: "prefixExpression",
+    tag: "prefixExpression",
     token: p.curToken,
     operator: p.curToken.literal,
   };
@@ -103,7 +103,7 @@ const parsePrefixExpression = (p: t): Expression.t => {
 
 const parseInfixExpression = (p: t, left: Expression.t): Expression.t => {
   const expression = {
-    _tag: "infixExpression",
+    tag: "infixExpression",
     token: p.curToken,
     operator: p.curToken.literal,
     left: left,
@@ -190,10 +190,10 @@ const parseLetStatement = (p: t): LetStatement.t | null => {
 
 const parseReturnStatement = (p: t): ReturnStatement.t | null => {
   const stmt: ReturnStatement.t = {
-    _tag: "returnStatement",
+    tag: "returnStatement",
     token: p.curToken,
     returnValue: {
-      _tag: "identifier",
+      tag: "identifier",
       token: p.curToken,
       value: p.curToken.literal,
     },
@@ -231,7 +231,7 @@ const parseExpression = (p: t, precedence: number): Expression.t | null => {
 
 const parseExpressionStatement = (p: t): ExpressionStatement.t => {
   let stmt = {
-    _tag: "expressionStatement",
+    tag: "expressionStatement",
     token: p.curToken,
     expression: parseExpression(p, LOWEST),
   };

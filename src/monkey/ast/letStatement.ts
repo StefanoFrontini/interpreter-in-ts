@@ -1,12 +1,12 @@
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 import { Readable } from "node:stream";
-export interface t {
-  _tag: "letStatement";
+export type t = {
+  tag: "letStatement";
   token: Token.t;
   name: Identifier.t;
   value: Identifier.t;
-}
+};
 
 export const tokenLiteral = (s: t): string => s.token.literal;
 

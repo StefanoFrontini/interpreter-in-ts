@@ -231,7 +231,7 @@ describe("parser", () => {
       );
       const exprStmt = program.statements[0] as ExpressionStatement.t;
       assert.strictEqual(
-        exprStmt.expression["_tag"],
+        exprStmt.expression["tag"],
         "prefixExpression",
         `exprStmt.expression is not a Prefix Expression. got=${exprStmt.expression}`
       );
@@ -341,7 +341,7 @@ describe("parser", () => {
       );
       const exprStmt = program.statements[0] as ExpressionStatement.t;
       assert.strictEqual(
-        exprStmt.expression["_tag"],
+        exprStmt.expression["tag"],
         "infixExpression",
         `exprStmt.expression is not an Infix Expression. got=${exprStmt.expression}`
       );
