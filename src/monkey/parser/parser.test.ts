@@ -434,19 +434,12 @@ describe("parser", () => {
       program.statements[0] is not an ExpressionStatement. got=${program.statements[0]}`
       );
       const exprStmt = program.statements[0] as ExpressionStatement.t;
-      assert.strictEqual(
-        exprStmt.expression["tag"],
-        "infixExpression",
-        `exprStmt.expression is not an Infix Expression. got=${exprStmt.expression}`
-      );
-      const exp = exprStmt.expression as InfixExpression.t;
-      testIntegerLiteral(exp.left, tt.leftValue);
-      assert.strictEqual(
-        exp.operator,
+      testInfixExpression(
+        exprStmt.expression,
+        tt.leftValue,
         tt.operator,
-        `exp.operator is not '${tt.operator}'. got=${exp.operator}`
+        tt.rightValue
       );
-      testIntegerLiteral(exp.right, tt.rightValue);
     }
   });
   it("TestOperatorPrecedenceParsing", async () => {
