@@ -1,6 +1,8 @@
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
+import * as BlockStatement from "#root/src/monkey/ast/blockStatement.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
+import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
@@ -132,6 +134,42 @@ const parseGroupedExpression = (p: t): Expression.t | null => {
   return exp;
 };
 
+const parseBlockStatement = (p: t): BlockStatement.t => {
+  const block = {
+    tag: "blockStatement",
+    token: p.curToken,
+    statements: Array<Statement.t>(),
+  };
+  nextToken(p);
+  while (!curTokenIs(p, Token.RBRACE) && !curTokenIs(p, Token.EOF)) {
+    const stmt = parseStatement(p);
+    if (stmt) {
+      block["statements"].push(stmt);
+    }
+    nextToken(p);
+  }
+  return block as BlockStatement.t;
+};
+
+const parseIfExpression = (p: t): Expression.t | null => {
+  const expression = {
+    tag: "ifExpression",
+    token: p.curToken,
+  };
+  if (!expectedPeek(p, Token.LPAREN)) return null;
+  nextToken(p);
+  expression["condition"] = parseExpression(p, LOWEST);
+  if (!expectedPeek(p, Token.RPAREN)) return null;
+  if (!expectedPeek(p, Token.LBRACE)) return null;
+  expression["consequence"] = parseBlockStatement(p);
+  if (peekTokenIs(p, Token.ELSE)) {
+    nextToken(p);
+    if (!expectedPeek(p, Token.LBRACE)) return null;
+    expression["alternative"] = parseBlockStatement(p);
+  }
+  return expression as IfExpression.t;
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -159,6 +197,7 @@ export const init = (l: Lexer.t): t => {
   registerPrefix(p, Token.TRUE, parseBoolean);
   registerPrefix(p, Token.FALSE, parseBoolean);
   registerPrefix(p, Token.LPAREN, parseGroupedExpression);
+  registerPrefix(p, Token.IF, parseIfExpression);
   return p;
 };
 

@@ -1,19 +1,19 @@
-import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
-import assert from "node:assert";
-import { describe, it } from "node:test";
-// import * as Ast from "#root/src/monkey/ast/ast.ts";
 import * as BooleanExpression from "#root/src/monkey/ast/booleanExpression.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
+import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
 import * as InfixExpression from "#root/src/monkey/ast/infixExpression.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
+import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
+import assert from "node:assert";
+import { describe, it } from "node:test";
 
 const testIntegerLiteral = (exp: Expression.t, value: number) => {
   assert.strictEqual(
@@ -632,5 +632,95 @@ describe("parser", () => {
         }, got=${await Program.string(program)}`
       );
     }
+  });
+  it("TestIfExpression", async () => {
+    const input = "if (x < y) { x }";
+    const l = Lexer.init(input);
+    const p = Parser.init(l);
+    const program = Parser.parseProgram(p);
+    assert.strictEqual(
+      p.errors.length,
+      0,
+      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+        "\n"
+      )}`
+    );
+    assert.strictEqual(
+      program.statements[0]["tag"],
+      "expressionStatement",
+      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0].tag}`
+    );
+    const exp = program.statements[0] as ExpressionStatement.t;
+    assert.strictEqual(
+      exp.expression["tag"],
+      "ifExpression",
+      `exp.expression is not a If Expression. got=${exp.expression}`
+    );
+    const ie = exp.expression as IfExpression.t;
+    testInfixExpression(ie.condition, "x", "<", "y");
+    assert.strictEqual(
+      ie.consequence.statements.length,
+      1,
+      `ie.consequence.statements.length is not 1. got=${ie.consequence.statements.length}`
+    );
+    assert.strictEqual(
+      ie.consequence.statements[0]["tag"],
+      "expressionStatement",
+      `ie.consequence.statements[0] is not an ExpressionStatement. got=${ie.consequence.statements[0]}`
+    );
+    testIdentifier(ie.consequence.statements[0].expression, "x");
+    assert.strictEqual(
+      ie.alternative,
+      undefined,
+      `ie.alternative is not null. got=${ie.alternative}`
+    );
+  });
+  it("TestIfElseExpression", async () => {
+    const input = "if (x < y) { x } else { y }";
+    const l = Lexer.init(input);
+    const p = Parser.init(l);
+    const program = Parser.parseProgram(p);
+    assert.strictEqual(
+      p.errors.length,
+      0,
+      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+        "\n"
+      )}`
+    );
+    assert.strictEqual(
+      program.statements[0]["tag"],
+      "expressionStatement",
+      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0].tag}`
+    );
+    const exp = program.statements[0] as ExpressionStatement.t;
+    assert.strictEqual(
+      exp.expression["tag"],
+      "ifExpression",
+      `exp.expression is not a If Expression. got=${exp.expression}`
+    );
+    const ie = exp.expression as IfExpression.t;
+    testInfixExpression(ie.condition, "x", "<", "y");
+    assert.strictEqual(
+      ie.consequence.statements.length,
+      1,
+      `ie.consequence.statements.length is not 1. got=${ie.consequence.statements.length}`
+    );
+    assert.strictEqual(
+      ie.consequence.statements[0]["tag"],
+      "expressionStatement",
+      `ie.consequence.statements[0] is not an ExpressionStatement. got=${ie.consequence.statements[0]}`
+    );
+    testIdentifier(ie.consequence.statements[0].expression, "x");
+    assert.strictEqual(
+      ie.alternative?.statements.length,
+      1,
+      `ie.alternative.statements.length is not 1. got=${ie.alternative?.statements.length}`
+    );
+    assert.strictEqual(
+      ie.alternative.statements[0]["tag"],
+      "expressionStatement",
+      `ie.alternative.statements[0] is not an ExpressionStatement. got=${ie.alternative.statements[0]}`
+    );
+    testIdentifier(ie.alternative.statements[0].expression, "y");
   });
 });
