@@ -34,10 +34,10 @@ export type t = {
   curToken: Token.t;
   peekToken: Token.t;
   errors: string[];
-  prefixParseFns: Map<Token.TokenType, (p: t) => Expression.t>;
+  prefixParseFns: Map<Token.TokenType, (p: t) => Expression.t | null>;
   infixParseFns: Map<
     Token.TokenType,
-    (p: t, left: Expression.t) => Expression.t
+    (p: t, left: Expression.t | null) => Expression.t
   >;
 };
 
@@ -54,14 +54,14 @@ const curPrecedence = (p: t): number => {
 const registerPrefix = (
   p: t,
   tokenType: Token.TokenType,
-  fn: (p: t) => Expression.t
+  fn: (p: t) => Expression.t | null
 ): void => {
   p.prefixParseFns.set(tokenType, fn);
 };
 const registerInfix = (
   p: t,
   tokenType: Token.TokenType,
-  fn: (p: t, left: Expression.t) => Expression.t
+  fn: (p: t, left: Expression.t | null) => Expression.t
 ): void => {
   p.infixParseFns.set(tokenType, fn);
 };
@@ -101,7 +101,10 @@ const parsePrefixExpression = (p: t): Expression.t => {
   return expression as PrefixExpression.t;
 };
 
-const parseInfixExpression = (p: t, left: Expression.t): Expression.t => {
+const parseInfixExpression = (
+  p: t,
+  left: Expression.t | null
+): Expression.t => {
   const expression = {
     tag: "infixExpression",
     token: p.curToken,
@@ -122,6 +125,13 @@ const parseBoolean = (p: t): Expression.t => {
   };
 };
 
+const parseGroupedExpression = (p: t): Expression.t | null => {
+  nextToken(p);
+  const exp = parseExpression(p, LOWEST);
+  if (!expectedPeek(p, Token.RPAREN)) return null;
+  return exp;
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -131,7 +141,7 @@ export const init = (l: Lexer.t): t => {
     prefixParseFns: new Map<Token.TokenType, (p: t) => Expression.t>(),
     infixParseFns: new Map<
       Token.TokenType,
-      (p: t, left: Expression.t) => Expression.t
+      (p: t, left: Expression.t | null) => Expression.t
     >(),
   };
   registerPrefix(p, Token.IDENT, parseIdentifier);
@@ -148,6 +158,7 @@ export const init = (l: Lexer.t): t => {
   registerInfix(p, Token.GT, parseInfixExpression);
   registerPrefix(p, Token.TRUE, parseBoolean);
   registerPrefix(p, Token.FALSE, parseBoolean);
+  registerPrefix(p, Token.LPAREN, parseGroupedExpression);
   return p;
 };
 
