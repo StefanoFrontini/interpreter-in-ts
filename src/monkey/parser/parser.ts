@@ -114,6 +114,14 @@ const parseInfixExpression = (p: t, left: Expression.t): Expression.t => {
   return expression as Expression.t;
 };
 
+const parseBoolean = (p: t): Expression.t => {
+  return {
+    tag: "booleanExpression",
+    token: p.curToken,
+    value: curTokenIs(p, Token.TRUE),
+  };
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -138,6 +146,8 @@ export const init = (l: Lexer.t): t => {
   registerInfix(p, Token.NOT_EQ, parseInfixExpression);
   registerInfix(p, Token.LT, parseInfixExpression);
   registerInfix(p, Token.GT, parseInfixExpression);
+  registerPrefix(p, Token.TRUE, parseBoolean);
+  registerPrefix(p, Token.FALSE, parseBoolean);
   return p;
 };
 

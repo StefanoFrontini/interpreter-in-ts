@@ -1,3 +1,4 @@
+import * as BooleanExpression from "#root/src/monkey/ast/booleanExpression.ts";
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as InfixExpression from "#root/src/monkey/ast/infixExpression.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
@@ -8,7 +9,8 @@ export type t =
   | Identifier.t
   | IntegerLiteral.t
   | PrefixExpression.t
-  | InfixExpression.t;
+  | InfixExpression.t
+  | BooleanExpression.t;
 
 export const string = async (e: t): Promise<string> => {
   let stringExpr = "";
@@ -25,9 +27,12 @@ export const string = async (e: t): Promise<string> => {
     case "identifier":
       stringExpr = Identifier.string(e);
       break;
+    case "booleanExpression":
+      stringExpr = BooleanExpression.string(e);
+      break;
     default:
       const _exhaustiveCheck: never = e;
-      return _exhaustiveCheck;
+      throw new Error(_exhaustiveCheck);
   }
   const readableStream = Readable.from([""]);
   readableStream.push(stringExpr);

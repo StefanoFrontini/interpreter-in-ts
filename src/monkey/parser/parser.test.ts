@@ -2,6 +2,7 @@ import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import assert from "node:assert";
 import { describe, it } from "node:test";
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
+import * as BooleanExpression from "#root/src/monkey/ast/booleanExpression.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
@@ -56,9 +57,30 @@ const testIdentifier = (exp: Expression.t, value: string) => {
   );
 };
 
+const testBooleanLiteral = (exp: Expression.t, value: boolean) => {
+  assert.strictEqual(
+    exp["tag"],
+    "booleanExpression",
+    `exp is not an Boolean. got=${exp["tag"]}`
+  );
+  const bool = exp as BooleanExpression.t;
+  assert.strictEqual(
+    bool.value,
+    value,
+    `booleanExpression.value is not '${value}'. got=${bool.value}`
+  );
+  assert.strictEqual(
+    BooleanExpression.tokenLiteral(bool),
+    value.toString(),
+    `booleanExpression.tokenLiteral() is not '${value}'. got=${BooleanExpression.tokenLiteral(
+      bool
+    )}`
+  );
+};
+
 const testLiteralExpression = (
   exp: Expression.t,
-  expected: string | number
+  expected: string | number | boolean
 ) => {
   switch (exp["tag"]) {
     case "integerLiteral":
@@ -81,6 +103,16 @@ const testLiteralExpression = (
         testIdentifier(exp, expected);
       }
       break;
+    case "booleanExpression":
+      assert.strictEqual(
+        typeof expected,
+        "boolean",
+        `invalid expected value, got ${typeof expected}`
+      );
+      if (typeof expected === "boolean") {
+        testBooleanLiteral(exp, expected);
+      }
+      break;
     default:
       assert.ok(false, `unknown expression type: ${exp["tag"]}`);
   }
@@ -88,9 +120,9 @@ const testLiteralExpression = (
 
 const testInfixExpression = (
   exp: Expression.t,
-  left: number | string,
+  left: number | string | boolean,
   operator: string,
-  right: number | string
+  right: number | string | boolean
 ) => {
   assert.strictEqual(
     exp["tag"],
@@ -405,6 +437,24 @@ describe("parser", () => {
         operator: "!=",
         rightValue: 5,
       },
+      {
+        input: "true == true",
+        leftValue: true,
+        operator: "==",
+        rightValue: true,
+      },
+      {
+        input: "true != false",
+        leftValue: true,
+        operator: "!=",
+        rightValue: false,
+      },
+      {
+        input: "false == false",
+        leftValue: false,
+        operator: "==",
+        rightValue: false,
+      },
     ];
     for (const tt of infixTests) {
       const l = Lexer.init(tt.input);
@@ -492,6 +542,22 @@ describe("parser", () => {
         input: "3 + 4 * 5 == 3 * 1 + 4 * 5",
         expected: "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
       },
+      {
+        input: "true",
+        expected: "true",
+      },
+      {
+        input: "false",
+        expected: "false",
+      },
+      {
+        input: "3 > 5 == false",
+        expected: "((3 > 5) == false)",
+      },
+      {
+        input: "3 < 5 == true",
+        expected: "((3 < 5) == true)",
+      },
     ];
 
     for (const tt of tests) {
@@ -500,6 +566,37 @@ describe("parser", () => {
       const program = Parser.parseProgram(p);
       // console.log("program", JSON.stringify(program, null, 2));
       // console.dir(program, { depth: null });
+      assert.strictEqual(
+        p.errors.length,
+        0,
+        `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+          "\n"
+        )}`
+      );
+      assert.strictEqual(
+        await Program.string(program),
+        tt.expected,
+        `Parser.parseProgram() returned incorrect program. expected=${
+          tt.expected
+        }, got=${await Program.string(program)}`
+      );
+    }
+  });
+  it("TestBooleanExpression", async () => {
+    const tests = [
+      {
+        input: "true;",
+        expected: "true",
+      },
+      {
+        input: "false;",
+        expected: "false",
+      },
+    ];
+    for (const tt of tests) {
+      const l = Lexer.init(tt.input);
+      const p = Parser.init(l);
+      const program = Parser.parseProgram(p);
       assert.strictEqual(
         p.errors.length,
         0,
