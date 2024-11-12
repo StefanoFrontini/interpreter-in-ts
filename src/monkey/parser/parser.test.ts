@@ -1,6 +1,7 @@
 import * as BooleanExpression from "#root/src/monkey/ast/booleanExpression.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
+import * as FunctionLiteral from "#root/src/monkey/ast/functionLiteral.ts";
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
 import * as InfixExpression from "#root/src/monkey/ast/infixExpression.ts";
@@ -722,5 +723,96 @@ describe("parser", () => {
       `ie.alternative.statements[0] is not an ExpressionStatement. got=${ie.alternative.statements[0]}`
     );
     testIdentifier(ie.alternative.statements[0].expression, "y");
+  });
+  it("TestFunctionLiteralParsing", async () => {
+    const input = "fn(x, y) { x + y; }";
+    const l = Lexer.init(input);
+    const p = Parser.init(l);
+    const program = Parser.parseProgram(p);
+    assert.strictEqual(
+      p.errors.length,
+      0,
+      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+        "\n"
+      )}`
+    );
+    assert.strictEqual(
+      program.statements.length,
+      1,
+      `program.statements does not contain 1 statements. got=${program.statements.length}`
+    );
+    assert.strictEqual(
+      program.statements[0]["tag"],
+      "expressionStatement",
+      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0]["tag"]}`
+    );
+    const exp = program.statements[0] as ExpressionStatement.t;
+    assert.strictEqual(
+      exp.expression["tag"],
+      "functionLiteral",
+      `exp.expression is not a FunctionLiteral. got=${exp.expression}`
+    );
+    const fl = exp.expression as FunctionLiteral.t;
+    assert.strictEqual(
+      fl.parameters.length,
+      2,
+      `fl.parameters.length is not 2. got=${fl.parameters.length}`
+    );
+    testLiteralExpression(fl.parameters[0], "x");
+    testLiteralExpression(fl.parameters[1], "y");
+    assert.strictEqual(
+      fl.body.statements.length,
+      1,
+      `fn.body.statements.length is not 1. got=${fl.body.statements.length}`
+    );
+    assert.strictEqual(
+      fl.body.statements[0]["tag"],
+      "expressionStatement",
+      `fn.body.statements[0] is not an ExpressionStatement. got=${fl.body.statements[0]}`
+    );
+    testInfixExpression(fl.body.statements[0].expression, "x", "+", "y");
+  });
+  it("TestFunctionParameterParsing", () => {
+    const tests = [
+      {
+        input: "fn() {}",
+        expectedParams: [],
+      },
+      {
+        input: "fn(x) {}",
+        expectedParams: ["x"],
+      },
+      {
+        input: "fn(x, y, z) {}",
+        expectedParams: ["x", "y", "z"],
+      },
+    ];
+    for (const tt of tests) {
+      const l = Lexer.init(tt.input);
+      const p = Parser.init(l);
+      const program = Parser.parseProgram(p);
+      assert.strictEqual(
+        p.errors.length,
+        0,
+        `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+          "\n"
+        )}`
+      );
+      const stmt = program.statements[0] as ExpressionStatement.t;
+      assert.strictEqual(
+        stmt.expression["tag"],
+        "functionLiteral",
+        `stmt.expression is not a FunctionLiteral. got=${stmt.expression}`
+      );
+      const fl = stmt.expression as FunctionLiteral.t;
+      assert.strictEqual(
+        fl.parameters.length,
+        tt.expectedParams.length,
+        `fl.parameters.length is not ${tt.expectedParams.length}. got=${fl.parameters.length}`
+      );
+      for (const [i, ident] of tt.expectedParams.entries()) {
+        testLiteralExpression(fl.parameters[i], ident);
+      }
+    }
   });
 });

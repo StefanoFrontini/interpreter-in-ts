@@ -2,6 +2,8 @@
 import * as BlockStatement from "#root/src/monkey/ast/blockStatement.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
+import * as FunctionLiteral from "#root/src/monkey/ast/functionLiteral.ts";
+import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
 import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
@@ -170,6 +172,45 @@ const parseIfExpression = (p: t): Expression.t | null => {
   return expression as IfExpression.t;
 };
 
+const parseFunctionParameters = (p: t): Identifier.t[] | null => {
+  const identifiers: Identifier.t[] = [];
+  if (peekTokenIs(p, Token.RPAREN)) {
+    nextToken(p);
+    return identifiers;
+  }
+  nextToken(p);
+  const ident: Identifier.t = {
+    tag: "identifier",
+    token: p.curToken,
+    value: p.curToken.literal,
+  };
+  identifiers.push(ident);
+  while (peekTokenIs(p, Token.COMMA)) {
+    nextToken(p);
+    nextToken(p);
+    const identifier: Identifier.t = {
+      tag: "identifier",
+      token: p.curToken,
+      value: p.curToken.literal,
+    };
+    identifiers.push(identifier);
+  }
+  if (!expectedPeek(p, Token.RPAREN)) return null;
+  return identifiers;
+};
+
+const parseFunctionLiteral = (p: t): Expression.t | null => {
+  const lit = {
+    tag: "functionLiteral",
+    token: p.curToken,
+  };
+  if (!expectedPeek(p, Token.LPAREN)) return null;
+  lit["parameters"] = parseFunctionParameters(p);
+  if (!expectedPeek(p, Token.LBRACE)) return null;
+  lit["body"] = parseBlockStatement(p);
+  return lit as FunctionLiteral.t;
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -198,6 +239,7 @@ export const init = (l: Lexer.t): t => {
   registerPrefix(p, Token.FALSE, parseBoolean);
   registerPrefix(p, Token.LPAREN, parseGroupedExpression);
   registerPrefix(p, Token.IF, parseIfExpression);
+  registerPrefix(p, Token.FUNCTION, parseFunctionLiteral);
   return p;
 };
 
