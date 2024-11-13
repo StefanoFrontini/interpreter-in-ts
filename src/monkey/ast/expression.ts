@@ -1,4 +1,5 @@
 import * as BooleanExpression from "#root/src/monkey/ast/booleanExpression.ts";
+import * as CallExpression from "#root/src/monkey/ast/callExpression.ts";
 import * as FunctionLiteral from "#root/src/monkey/ast/functionLiteral.ts";
 import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
@@ -14,7 +15,8 @@ export type t =
   | InfixExpression.t
   | BooleanExpression.t
   | IfExpression.t
-  | FunctionLiteral.t;
+  | FunctionLiteral.t
+  | CallExpression.t;
 
 export const string = async (e: t): Promise<string> => {
   let stringExpr = "";
@@ -39,6 +41,9 @@ export const string = async (e: t): Promise<string> => {
       break;
     case "functionLiteral":
       stringExpr = await FunctionLiteral.string(e);
+      break;
+    case "callExpression":
+      stringExpr = await CallExpression.string(e);
       break;
     default:
       const _exhaustiveCheck: never = e;

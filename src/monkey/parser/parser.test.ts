@@ -1,4 +1,5 @@
 import * as BooleanExpression from "#root/src/monkey/ast/booleanExpression.ts";
+import * as CallExpression from "#root/src/monkey/ast/callExpression.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as FunctionLiteral from "#root/src/monkey/ast/functionLiteral.ts";
@@ -15,7 +16,6 @@ import * as Parser from "#root/src/monkey/parser/parser.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
 const testIntegerLiteral = (exp: Expression.t, value: number) => {
   assert.strictEqual(
     exp["tag"],
@@ -579,6 +579,18 @@ describe("parser", () => {
         input: "!(true == true)",
         expected: "(!(true == true))",
       },
+      {
+        input: "a + add(b * c) + d",
+        expected: "((a + add((b * c))) + d)",
+      },
+      {
+        input: "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+        expected: "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+      },
+      {
+        input: "add(a + b + c * d / f + g)",
+        expected: "add((((a + b) + ((c * d) / f)) + g))",
+      },
     ];
 
     for (const tt of tests) {
@@ -814,5 +826,44 @@ describe("parser", () => {
         testLiteralExpression(fl.parameters[i], ident);
       }
     }
+  });
+  it("TestCallExpressionParsing", () => {
+    const input = "add(1, 2 * 3, 4 + 5);";
+    const l = Lexer.init(input);
+    const p = Parser.init(l);
+    const program = Parser.parseProgram(p);
+    assert.strictEqual(
+      p.errors.length,
+      0,
+      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+        "\n"
+      )}`
+    );
+    assert.strictEqual(
+      program.statements.length,
+      1,
+      `program.statements does not contain 1 statements. got=${program.statements.length}`
+    );
+    assert.strictEqual(
+      program.statements[0]["tag"],
+      "expressionStatement",
+      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0]["tag"]}`
+    );
+    const exp = program.statements[0] as ExpressionStatement.t;
+    assert.strictEqual(
+      exp.expression["tag"],
+      "callExpression",
+      `exp.expression is not a CallExpression. got=${exp.expression}`
+    );
+    const ce = exp.expression as CallExpression.t;
+    testIdentifier(ce.function, "add");
+    assert.strictEqual(
+      ce.arguments.length,
+      3,
+      `ce.arguments.length is not 3. got=${ce.arguments.length}`
+    );
+    testLiteralExpression(ce.arguments[0], 1);
+    testInfixExpression(ce.arguments[1], 2, "*", 3);
+    testInfixExpression(ce.arguments[2], 4, "+", 5);
   });
 });

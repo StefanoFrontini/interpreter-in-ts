@@ -1,5 +1,6 @@
 // import * as Ast from "#root/src/monkey/ast/ast.ts";
 import * as BlockStatement from "#root/src/monkey/ast/blockStatement.ts";
+import * as CallExpression from "#root/src/monkey/ast/callExpression.ts";
 import * as Expression from "#root/src/monkey/ast/expression.ts";
 import * as ExpressionStatement from "#root/src/monkey/ast/expressionStatement.ts";
 import * as FunctionLiteral from "#root/src/monkey/ast/functionLiteral.ts";
@@ -31,6 +32,7 @@ const precedences = new Map<Token.TokenType, number>([
   [Token.MINUS, SUM],
   [Token.SLASH, PRODUCT],
   [Token.ASTERISK, PRODUCT],
+  [Token.LPAREN, CALL],
 ]);
 
 export type t = {
@@ -211,6 +213,33 @@ const parseFunctionLiteral = (p: t): Expression.t | null => {
   return lit as FunctionLiteral.t;
 };
 
+const parseCallArguments = (p: t): Expression.t[] | null => {
+  const args: Expression.t[] = [];
+  if (peekTokenIs(p, Token.RPAREN)) {
+    nextToken(p);
+    return args;
+  }
+  nextToken(p);
+  args.push(parseExpression(p, LOWEST) as Expression.t);
+  while (peekTokenIs(p, Token.COMMA)) {
+    nextToken(p);
+    nextToken(p);
+    args.push(parseExpression(p, LOWEST) as Expression.t);
+  }
+  if (!expectedPeek(p, Token.RPAREN)) return null;
+  return args;
+};
+
+const parseCallExpression = (p: t, fn: Expression.t | null): Expression.t => {
+  const expression = {
+    tag: "callExpression",
+    token: p.curToken,
+    function: fn,
+  };
+  expression["arguments"] = parseCallArguments(p);
+  return expression as CallExpression.t;
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -240,6 +269,7 @@ export const init = (l: Lexer.t): t => {
   registerPrefix(p, Token.LPAREN, parseGroupedExpression);
   registerPrefix(p, Token.IF, parseIfExpression);
   registerPrefix(p, Token.FUNCTION, parseFunctionLiteral);
+  registerInfix(p, Token.LPAREN, parseCallExpression);
   return p;
 };
 
