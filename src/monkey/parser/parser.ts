@@ -298,11 +298,8 @@ const expectedPeek = (p: t, tokenType: Token.TokenType): boolean => {
 
 const parseLetStatement = (p: t): LetStatement.t | null => {
   let stmt = {
+    tag: "letStatement",
     token: p.curToken,
-    value: {
-      token: p.curToken,
-      value: p.curToken.literal,
-    },
   };
   if (!expectedPeek(p, Token.IDENT)) {
     return null;
@@ -314,27 +311,25 @@ const parseLetStatement = (p: t): LetStatement.t | null => {
   if (!expectedPeek(p, Token.ASSIGN)) {
     return null;
   }
-  while (!curTokenIs(p, Token.SEMICOLON)) {
+  nextToken(p);
+  stmt["value"] = parseExpression(p, LOWEST);
+  if (peekTokenIs(p, Token.SEMICOLON)) {
     nextToken(p);
   }
   return stmt as LetStatement.t;
 };
 
-const parseReturnStatement = (p: t): ReturnStatement.t | null => {
-  const stmt: ReturnStatement.t = {
+const parseReturnStatement = (p: t): ReturnStatement.t => {
+  const stmt = {
     tag: "returnStatement",
     token: p.curToken,
-    returnValue: {
-      tag: "identifier",
-      token: p.curToken,
-      value: p.curToken.literal,
-    },
   };
   nextToken(p);
-  while (!curTokenIs(p, Token.SEMICOLON)) {
+  stmt["returnValue"] = parseExpression(p, LOWEST);
+  if (peekTokenIs(p, Token.SEMICOLON)) {
     nextToken(p);
   }
-  return stmt;
+  return stmt as ReturnStatement.t;
 };
 
 const noPrefixParseFnError = (p: t, t: Token.TokenType): void => {

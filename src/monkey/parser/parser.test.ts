@@ -10,6 +10,7 @@ import * as IntegerLiteral from "#root/src/monkey/ast/integerLiteral.ts";
 import * as LetStatement from "#root/src/monkey/ast/letStatement.ts";
 import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
+import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
@@ -140,97 +141,129 @@ const testInfixExpression = (
   testLiteralExpression(ie.right, right);
 };
 
+const testLetStatement = (s: Statement.t, name: string) => {
+  assert.strictEqual(
+    Statement.tokenLiteral(s),
+    "let",
+    `s.tokenLiteral is not 'let'. got=${Statement.tokenLiteral(s)}`
+  );
+  assert.strictEqual(
+    s["tag"],
+    "letStatement",
+    `s is not a letStatement. got=${s["tag"]}`
+  );
+  const letStmt = s as LetStatement.t;
+  assert.strictEqual(
+    letStmt.name.value,
+    name,
+    `letStmt.name.value is not '${name}'. got=${letStmt.name.value}`
+  );
+  assert.strictEqual(
+    Identifier.tokenLiteral(letStmt.name),
+    name,
+    `letStmt.name.tokenLiteral() is not '${name}'. got=${Identifier.tokenLiteral(
+      letStmt.name
+    )}`
+  );
+};
+
 describe("parser", () => {
   it("TestLetStatements", () => {
-    const input = `
-        let x = 5;
-        let y = 10;
-        let foobar = 838383;
-        `;
-    const l = Lexer.init(input);
-    const p = Parser.init(l);
-    const program = Parser.parseProgram(p);
-    assert.strictEqual(
-      p.errors.length,
-      0,
-      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
-        "\n"
-      )}`
-    );
-    assert.notStrictEqual(program, null, "Parser.parseProgram() returned null");
-    assert.strictEqual(
-      program?.statements.length,
-      3,
-      `program.statements does not contain 3 statements. got: ${program?.statements.length}`
-    );
-
-    const tests: Array<{ expectedIdentifier: string }> = [
-      { expectedIdentifier: "x" },
-      { expectedIdentifier: "y" },
-      { expectedIdentifier: "foobar" },
+    const tests = [
+      {
+        input: `let x = 5;`,
+        expectedIdentifier: "x",
+        expectedValue: 5,
+      },
+      {
+        input: `let y = true;`,
+        expectedIdentifier: "y",
+        expectedValue: true,
+      },
+      {
+        input: `let foobar = y;`,
+        expectedIdentifier: "foobar",
+        expectedValue: "y",
+      },
     ];
 
-    for (const [i, tt] of tests.entries()) {
-      const stmt = program.statements[i];
+    for (const tt of tests) {
+      const l = Lexer.init(tt.input);
+      const p = Parser.init(l);
+      const program = Parser.parseProgram(p);
       assert.strictEqual(
-        Statement.tokenLiteral(stmt),
-        "let",
-        `Statement.tokenLiteral is not 'let'. got=${Statement.tokenLiteral(
-          stmt
+        p.errors.length,
+        0,
+        `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+          "\n"
         )}`
       );
-      let letStmt = stmt as LetStatement.t;
-
       assert.notStrictEqual(
-        letStmt.name,
-        undefined,
-        `letStmt.name is not defined. got=${letStmt.name}`
-      );
-
-      assert.strictEqual(
-        letStmt.name.value,
-        tt.expectedIdentifier,
-        `letStmt.name.value is not '${tt.expectedIdentifier}'. got=${letStmt.name.value}`
+        program,
+        null,
+        "Parser.parseProgram() returned null"
       );
       assert.strictEqual(
-        Identifier.tokenLiteral(letStmt.name),
-        tt.expectedIdentifier,
-        `letStmt.name.value is not '${tt.expectedIdentifier}'. got=${letStmt.name.value}`
+        program.statements.length,
+        1,
+        `program.statements does not contain 1 statements. got: ${program?.statements.length}`
       );
+      testLetStatement(program.statements[0], tt.expectedIdentifier);
+      const stmt = program.statements[0] as LetStatement.t;
+      testLiteralExpression(stmt.value, tt.expectedValue);
     }
   });
   it("TestReturnStatements", () => {
-    const input = `
-        return 5;
-        return 10;
-        return 993322;
-        `;
-    const l = Lexer.init(input);
-    const p = Parser.init(l);
-    const program = Parser.parseProgram(p);
-    assert.strictEqual(
-      p.errors.length,
-      0,
-      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
-        "\n"
-      )}`
-    );
-    assert.notStrictEqual(program, null, "Parser.parseProgram() returned null");
-    assert.strictEqual(
-      program.statements.length,
-      3,
-      `
-      program.statements does not contain 3 statements. got=${program.statements.length}`
-    );
-
-    for (const stmt of program.statements) {
+    const tests = [
+      {
+        input: `return 5;`,
+        expectedValue: 5,
+      },
+      {
+        input: `return true;`,
+        expectedValue: true,
+      },
+      {
+        input: `return foobar;`,
+        expectedValue: "foobar",
+      },
+    ];
+    for (const tt of tests) {
+      const l = Lexer.init(tt.input);
+      const p = Parser.init(l);
+      const program = Parser.parseProgram(p);
       assert.strictEqual(
-        Statement.tokenLiteral(stmt),
-        "return",
-        `Statement.tokenLiteral is not 'return'. got=${Statement.tokenLiteral(
-          stmt
+        p.errors.length,
+        0,
+        `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+          "\n"
         )}`
       );
+      assert.notStrictEqual(
+        program,
+        null,
+        "Parser.parseProgram() returned null"
+      );
+      assert.strictEqual(
+        program.statements.length,
+        1,
+        `program.statements does not contain 1 statements. got: ${program?.statements.length}`
+      );
+      const stmt = program.statements[0];
+      assert.strictEqual(
+        stmt["tag"],
+        "returnStatement",
+        `stmt.expression is not a ReturnStatement. got=${stmt["tag"]}`
+      );
+      const returnStmt = stmt as ReturnStatement.t;
+      assert.strictEqual(
+        Statement.tokenLiteral(returnStmt),
+        "return",
+        `Statement.tokenLiteral is not 'return'. got=${Statement.tokenLiteral(
+          returnStmt
+        )}`
+      );
+      testLiteralExpression(returnStmt.returnValue, tt.expectedValue);
     }
   });
   it("TestIdentifierExpression", () => {
@@ -252,9 +285,6 @@ describe("parser", () => {
       `
       program.statements has not enough statements. got=${program.statements.length}`
     );
-    // const isExpressionStatement = (
-    //   s: Statement.t
-    // ): s is ExpressionStatement.t => s.hasOwnProperty("expression");
 
     assert.ok(
       program.statements[0].hasOwnProperty("expression"),
@@ -661,7 +691,7 @@ describe("parser", () => {
     assert.strictEqual(
       program.statements[0]["tag"],
       "expressionStatement",
-      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0].tag}`
+      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0]["tag"]}`
     );
     const exp = program.statements[0] as ExpressionStatement.t;
     assert.strictEqual(
