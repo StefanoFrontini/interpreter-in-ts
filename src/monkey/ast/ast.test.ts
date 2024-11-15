@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 describe("ast", () => {
   it("TestString", async () => {
     const program: Program.t = {
+      tag: "program",
       statements: [
         {
           tag: "letStatement",

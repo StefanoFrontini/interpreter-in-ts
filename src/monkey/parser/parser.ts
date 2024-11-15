@@ -381,6 +381,7 @@ const parseStatement = (p: t): Statement.t | null => {
 
 export const parseProgram = (p: t): Program.t => {
   const program: Program.t = {
+    tag: "program",
     statements: [],
   };
   while (p.curToken.type !== Token.EOF) {

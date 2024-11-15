@@ -1,6 +1,7 @@
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 // import * as Token from "#root/src/monkey/token/token.ts";
-import * as Program from "#root/src/monkey/ast/program.ts";
+import * as Evaluator from "#root/src/monkey/evaluator/evaluator.ts";
+import * as Obj from "#root/src/monkey/object/obj.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
 import { stdin as input, stdout as output } from "node:process";
 import * as readline from "node:readline/promises";
@@ -25,7 +26,11 @@ export const start = async (): Promise<void> => {
       printParserErrors(p.errors);
       continue;
     }
-    console.log(await Program.string(program));
+    const evaluated = Evaluator.evalNode(program);
+    if (evaluated) {
+      console.log(Obj.inspect(evaluated));
+    }
+    // console.log(await Program.string(program));
     // let tok = Lexer.nextToken(l);
     // while (tok.type !== Token.EOF) {
     //   console.log(tok);

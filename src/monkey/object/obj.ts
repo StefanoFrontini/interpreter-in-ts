@@ -9,3 +9,17 @@ export const INTEGER_OBJ = "INTEGER",
   NULL_OBJ = "NULL";
 
 export type t = Integer.t | Bool.t | Null.t;
+
+export const inspect = (obj: t): string => {
+  switch (obj["tag"]) {
+    case "integer":
+      return Integer.inspect(obj);
+    case "boolean":
+      return Bool.inspect(obj);
+    case "null":
+      return Null.inspect();
+    default:
+      const _exhaustiveCheck: never = obj;
+      throw new Error(_exhaustiveCheck);
+  }
+};

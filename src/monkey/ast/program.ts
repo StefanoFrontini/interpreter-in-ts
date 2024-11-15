@@ -1,6 +1,7 @@
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import { Readable } from "stream";
 export type t = {
+  tag: "program";
   statements: Statement.t[];
 };
 export const tokenLiteral = (p: t): string => {
