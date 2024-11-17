@@ -81,6 +81,56 @@ const evalPrefixExpression = (
   }
 };
 
+const evalIntegerInfixExpression = (
+  operator: string,
+  left: Obj.t | null,
+  right: Obj.t | null
+): Obj.t => {
+  if (left === null || right === null) {
+    return NULL;
+  }
+  switch (operator) {
+    case "+":
+      return {
+        tag: "integer",
+        value: left["value"] + right["value"],
+      } as Integer.t;
+    case "-":
+      return {
+        tag: "integer",
+        value: left["value"] - right["value"],
+      } as Integer.t;
+    case "*":
+      return {
+        tag: "integer",
+        value: left["value"] * right["value"],
+      } as Integer.t;
+    case "/":
+      return {
+        tag: "integer",
+        value: left["value"] / right["value"],
+      } as Integer.t;
+    default:
+      return NULL;
+    //   const _exhaustiveCheck: never = operator;
+    //   throw new Error(_exhaustiveCheck);
+  }
+};
+
+const evalInfixExpression = (
+  operator: string,
+  left: Obj.t | null,
+  right: Obj.t | null
+): Obj.t | null => {
+  if (left === null || right === null) {
+    return NULL;
+  }
+  if (left["tag"] === "integer" && right["tag"] === "integer") {
+    return evalIntegerInfixExpression(operator, left, right);
+  }
+  return NULL;
+};
+
 export const evalNode = (node: Ast.t): Obj.t | null => {
   switch (node["tag"]) {
     case "program":
@@ -97,6 +147,12 @@ export const evalNode = (node: Ast.t): Obj.t | null => {
     case "prefixExpression":
       const right = evalNode(node["right"]);
       return evalPrefixExpression(node["operator"], right);
+    case "infixExpression":
+      const left = evalNode(node["left"]);
+      const rt = evalNode(node["right"]);
+      return evalInfixExpression(node["operator"], left, rt);
+    // case "blockStatement":
+    //   return evalStatements(node["statements"]);
     default:
       return null;
     //   const _exhaustiveCheck: never = node;
