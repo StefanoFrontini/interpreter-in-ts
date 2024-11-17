@@ -110,6 +110,14 @@ const evalIntegerInfixExpression = (
         tag: "integer",
         value: left["value"] / right["value"],
       } as Integer.t;
+    case "<":
+      return nativeBoolToBooleanObject(left["value"] < right["value"]);
+    case ">":
+      return nativeBoolToBooleanObject(left["value"] > right["value"]);
+    case "==":
+      return nativeBoolToBooleanObject(left["value"] === right["value"]);
+    case "!=":
+      return nativeBoolToBooleanObject(left["value"] !== right["value"]);
     default:
       return NULL;
     //   const _exhaustiveCheck: never = operator;
@@ -127,6 +135,12 @@ const evalInfixExpression = (
   }
   if (left["tag"] === "integer" && right["tag"] === "integer") {
     return evalIntegerInfixExpression(operator, left, right);
+  }
+  if (operator === "==") {
+    return nativeBoolToBooleanObject(left === right);
+  }
+  if (operator === "!=") {
+    return nativeBoolToBooleanObject(left !== right);
   }
   return NULL;
 };
