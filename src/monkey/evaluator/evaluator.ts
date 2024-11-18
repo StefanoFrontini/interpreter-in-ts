@@ -1,4 +1,5 @@
 import * as Ast from "#root/src/monkey/ast/ast.ts";
+import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Bool from "#root/src/monkey/object/bool.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
@@ -145,7 +146,36 @@ const evalInfixExpression = (
   return NULL;
 };
 
+const isTruthy = (obj: Obj.t | null): boolean => {
+  if (obj === null) {
+    return false;
+  }
+  switch (obj["tag"]) {
+    case "boolean":
+      return obj["value"];
+    case "null":
+      return false;
+    default:
+      return true;
+    //   const _exhaustiveCheck: never = obj;
+    //   throw new Error(_exhaustiveCheck);
+  }
+};
+
+const evalIfExpression = (ie: IfExpression.t): Obj.t | null => {
+  //   console.dir(ie, { depth: null });
+  const condition = evalNode(ie["condition"]);
+  if (isTruthy(condition)) {
+    return evalNode(ie["consequence"]);
+  } else if (ie["alternative"]) {
+    return evalNode(ie["alternative"]);
+  } else {
+    return NULL;
+  }
+};
+
 export const evalNode = (node: Ast.t): Obj.t | null => {
+  //   console.dir(node, { depth: null });
   switch (node["tag"]) {
     case "program":
       return evalStatements(node["statements"]);
@@ -165,8 +195,10 @@ export const evalNode = (node: Ast.t): Obj.t | null => {
       const left = evalNode(node["left"]);
       const rt = evalNode(node["right"]);
       return evalInfixExpression(node["operator"], left, rt);
-    // case "blockStatement":
-    //   return evalStatements(node["statements"]);
+    case "blockStatement":
+      return evalStatements(node["statements"]);
+    case "ifExpression":
+      return evalIfExpression(node);
     default:
       return null;
     //   const _exhaustiveCheck: never = node;

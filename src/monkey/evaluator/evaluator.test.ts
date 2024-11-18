@@ -44,6 +44,15 @@ const testBooleanObject = (obj: Obj.t | null, expected: boolean) => {
   );
 };
 
+const testNullObject = (obj: Obj.t | null) => {
+  assert.ok(obj, `obj is null. got=${obj}`);
+  assert.strictEqual(
+    obj["tag"],
+    "null",
+    `obj is not a Null. got=${obj["tag"]}`
+  );
+};
+
 describe("evaluator", () => {
   it("TestEvalIntegerExpression", () => {
     const tests = [
@@ -223,6 +232,46 @@ describe("evaluator", () => {
     for (const tt of tests) {
       const evaluated = testEvalNode(tt.input);
       testBooleanObject(evaluated, tt.expected);
+    }
+  });
+  it("TestIfElseExpressions", () => {
+    const tests = [
+      {
+        input: "if (true) { 10 }",
+        expected: 10,
+      },
+      {
+        input: "if (false) { 10 }",
+        expected: null,
+      },
+      {
+        input: "if (1) { 10 }",
+        expected: 10,
+      },
+      {
+        input: "if (1 < 2) { 10 }",
+        expected: 10,
+      },
+      {
+        input: "if (1 > 2) { 10 }",
+        expected: null,
+      },
+      {
+        input: "if (1 > 2) { 10 } else { 20 }",
+        expected: 20,
+      },
+      {
+        input: "if (1 < 2) { 10 } else { 20 }",
+        expected: 10,
+      },
+    ];
+    for (const tt of tests) {
+      const evaluated = testEvalNode(tt.input);
+      if (tt.expected) {
+        testIntegerObject(evaluated, tt.expected);
+      } else {
+        testNullObject(evaluated);
+      }
     }
   });
 });
