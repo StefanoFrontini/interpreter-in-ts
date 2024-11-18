@@ -274,4 +274,39 @@ describe("evaluator", () => {
       }
     }
   });
+  it("TestReturnStatements", () => {
+    const tests = [
+      {
+        input: "return 10;",
+        expected: 10,
+      },
+      {
+        input: "return 10; 9;",
+        expected: 10,
+      },
+      {
+        input: "return 2 * 5; 9;",
+        expected: 10,
+      },
+      {
+        input: "9; return 2 * 5; 9;",
+        expected: 10,
+      },
+      {
+        input: `
+                if (10 > 1) {
+                    if (10 > 1) {
+                        return 10;
+                        }
+                    return 1;
+                }
+        `,
+        expected: 10,
+      },
+    ];
+    for (const tt of tests) {
+      const evaluated = testEvalNode(tt.input);
+      testIntegerObject(evaluated, tt.expected);
+    }
+  });
 });

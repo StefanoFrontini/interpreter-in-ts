@@ -1,5 +1,7 @@
 import * as Ast from "#root/src/monkey/ast/ast.ts";
+import * as BlockStatement from "#root/src/monkey/ast/blockStatement.ts";
 import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
+import * as Program from "#root/src/monkey/ast/program.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Bool from "#root/src/monkey/object/bool.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
@@ -10,6 +12,9 @@ const evalStatements = (statements: Statement.t[]): Obj.t | null => {
   let result: Obj.t | null = null;
   for (const statement of statements) {
     result = evalNode(statement);
+    if (result !== null && result["tag"] === "returnValue") {
+      return result["value"];
+    }
   }
   return result;
 };
@@ -173,12 +178,33 @@ const evalIfExpression = (ie: IfExpression.t): Obj.t | null => {
     return NULL;
   }
 };
+const evalProgram = (program: Program.t): Obj.t | null => {
+  let result: Obj.t | null = null;
+  for (const statement of program.statements) {
+    result = evalNode(statement);
+    if (result !== null && result["tag"] === "returnValue") {
+      return result["value"];
+    }
+  }
+  return result;
+};
+
+const evalBlockStatement = (block: BlockStatement.t): Obj.t | null => {
+  let result: Obj.t | null = null;
+  for (const statement of block.statements) {
+    result = evalNode(statement);
+    if (result !== null && Obj.type(result) === Obj.RETURN_VALUE_OBJ) {
+      return result;
+    }
+  }
+  return result;
+};
 
 export const evalNode = (node: Ast.t): Obj.t | null => {
   //   console.dir(node, { depth: null });
   switch (node["tag"]) {
     case "program":
-      return evalStatements(node["statements"]);
+      return evalProgram(node);
     case "expressionStatement":
       return evalNode(node["expression"]);
     case "integerLiteral":
@@ -196,9 +222,15 @@ export const evalNode = (node: Ast.t): Obj.t | null => {
       const rt = evalNode(node["right"]);
       return evalInfixExpression(node["operator"], left, rt);
     case "blockStatement":
-      return evalStatements(node["statements"]);
+      return evalBlockStatement(node);
     case "ifExpression":
       return evalIfExpression(node);
+    case "returnStatement":
+      const val = evalNode(node["returnValue"]);
+      return {
+        tag: "returnValue",
+        value: val ?? NULL,
+      };
     default:
       return null;
     //   const _exhaustiveCheck: never = node;
