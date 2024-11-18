@@ -4,6 +4,7 @@ import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Bool from "#root/src/monkey/object/bool.ts";
+import * as ErrorObj from "#root/src/monkey/object/errorObj.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
 import * as Null from "#root/src/monkey/object/null.ts";
 import * as Obj from "#root/src/monkey/object/obj.ts";
@@ -33,6 +34,13 @@ const NULL: Null.t = {
   tag: "null",
 };
 
+const newError = (message: string, ..._args: string[]): ErrorObj.t => {
+  return {
+    tag: "error",
+    message: message + "\n" + _args.join("\n"),
+  };
+};
+
 const nativeBoolToBooleanObject = (input: boolean): Bool.t =>
   input ? TRUE : FALSE;
 
@@ -56,7 +64,10 @@ const evalMinusPrefixOperatorExpression = (
   right: Obj.t | null
 ): Obj.t | null => {
   if (right === null) {
-    return NULL;
+    return newError(`right expression is null`);
+  }
+  if (Obj.type(right) !== Obj.INTEGER_OBJ) {
+    return newError(`unknown operator: -`, Obj.type(right));
   }
   switch (right["tag"]) {
     case "integer":
@@ -75,13 +86,16 @@ const evalPrefixExpression = (
   operator: string,
   right: Obj.t | null
 ): Obj.t | null => {
+  if (right === null) {
+    return newError(`right expression is null`);
+  }
   switch (operator) {
     case "!":
       return evalBangOperatorExpression(right);
     case "-":
       return evalMinusPrefixOperatorExpression(right);
     default:
-      return NULL;
+      return newError(`unknown operator: ${operator}`, Obj.type(right));
     //   const _exhaustiveCheck: never = operator;
     //   throw new Error(_exhaustiveCheck);
   }
@@ -93,7 +107,7 @@ const evalIntegerInfixExpression = (
   right: Obj.t | null
 ): Obj.t => {
   if (left === null || right === null) {
-    return NULL;
+    return newError(`left or right expression is null`);
   }
   switch (operator) {
     case "+":
@@ -125,7 +139,11 @@ const evalIntegerInfixExpression = (
     case "!=":
       return nativeBoolToBooleanObject(left["value"] !== right["value"]);
     default:
-      return NULL;
+      return newError(
+        `unknown operator: ${operator}`,
+        Obj.type(left),
+        Obj.type(right)
+      );
     //   const _exhaustiveCheck: never = operator;
     //   throw new Error(_exhaustiveCheck);
   }
@@ -137,7 +155,7 @@ const evalInfixExpression = (
   right: Obj.t | null
 ): Obj.t | null => {
   if (left === null || right === null) {
-    return NULL;
+    return newError(`left or right expression is null`);
   }
   if (left["tag"] === "integer" && right["tag"] === "integer") {
     return evalIntegerInfixExpression(operator, left, right);
@@ -148,7 +166,16 @@ const evalInfixExpression = (
   if (operator === "!=") {
     return nativeBoolToBooleanObject(left !== right);
   }
-  return NULL;
+  if (Obj.type(left) !== Obj.type(right)) {
+    return newError(
+      `type mismatch: ${Obj.type(left)} ${operator} ${Obj.type(right)}`
+    );
+  }
+  return newError(
+    `unknown operator: ${operator}`,
+    Obj.type(left),
+    Obj.type(right)
+  );
 };
 
 const isTruthy = (obj: Obj.t | null): boolean => {
