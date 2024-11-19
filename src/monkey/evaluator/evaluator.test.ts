@@ -349,7 +349,7 @@ describe("evaluator", () => {
       assert.strictEqual(
         evaluated["tag"],
         "error",
-        `evaluated is not an error. got=${evaluated["tag"]}`
+        `evaluated is not an error object. got=${evaluated["tag"]}`
       );
       assert.strictEqual(
         evaluated["message"],

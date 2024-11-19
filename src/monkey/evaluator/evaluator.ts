@@ -37,7 +37,7 @@ const NULL: Null.t = {
 const newError = (message: string, ..._args: string[]): ErrorObj.t => {
   return {
     tag: "error",
-    message: message + "\n" + _args.join("\n"),
+    message: message + _args.join("\n"),
   };
 };
 
@@ -140,9 +140,7 @@ const evalIntegerInfixExpression = (
       return nativeBoolToBooleanObject(left["value"] !== right["value"]);
     default:
       return newError(
-        `unknown operator: ${operator}`,
-        Obj.type(left),
-        Obj.type(right)
+        `unknown operator: ${Obj.type(left)} ${operator} ${Obj.type(right)}`
       );
     //   const _exhaustiveCheck: never = operator;
     //   throw new Error(_exhaustiveCheck);
@@ -172,9 +170,7 @@ const evalInfixExpression = (
     );
   }
   return newError(
-    `unknown operator: ${operator}`,
-    Obj.type(left),
-    Obj.type(right)
+    `unknown operator: ${Obj.type(left)} ${operator} ${Obj.type(right)}`
   );
 };
 
@@ -209,9 +205,16 @@ const evalProgram = (program: Program.t): Obj.t | null => {
   let result: Obj.t | null = null;
   for (const statement of program.statements) {
     result = evalNode(statement);
-    if (result !== null && result["tag"] === "returnValue") {
-      return result["value"];
+    if (!result) return newError("result is null");
+    switch (Obj.type(result)) {
+      case Obj.RETURN_VALUE_OBJ:
+        return result["value"];
+      case Obj.ERROR_OBJ:
+        return result;
     }
+    // if (result !== null && result["tag"] === "returnValue") {
+    //   return result["value"];
+    // }
   }
   return result;
 };
@@ -220,8 +223,13 @@ const evalBlockStatement = (block: BlockStatement.t): Obj.t | null => {
   let result: Obj.t | null = null;
   for (const statement of block.statements) {
     result = evalNode(statement);
-    if (result !== null && Obj.type(result) === Obj.RETURN_VALUE_OBJ) {
-      return result;
+    if (result !== null) {
+      if (
+        Obj.type(result) === Obj.RETURN_VALUE_OBJ ||
+        Obj.type(result) === Obj.ERROR_OBJ
+      ) {
+        return result;
+      }
     }
   }
   return result;

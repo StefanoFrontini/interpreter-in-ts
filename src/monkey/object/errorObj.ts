@@ -6,4 +6,4 @@ export type t = {
 
 export const type = (): Obj.ObjectType => Obj.ERROR_OBJ;
 
-export const inspect = (e: t): string => e.message;
+export const inspect = (e: t): string => `ERROR: ${e.message}`;
