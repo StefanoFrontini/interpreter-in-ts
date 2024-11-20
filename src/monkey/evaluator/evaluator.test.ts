@@ -1,6 +1,7 @@
 import * as Evaluator from "#root/src/monkey/evaluator/evaluator.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Bool from "#root/src/monkey/object/bool.ts";
+import * as Environment from "#root/src/monkey/object/environment.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
 import * as Obj from "#root/src/monkey/object/obj.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
@@ -11,7 +12,8 @@ const testEvalNode = (input: string): Obj.t | null => {
   const l = Lexer.init(input);
   const p = Parser.init(l);
   const program = Parser.parseProgram(p);
-  return Evaluator.evalNode(program);
+  const env = Environment.newEnvironment();
+  return Evaluator.evalNode(program, env);
 };
 
 const testIntegerObject = (obj: Obj.t | null, expected: number) => {
@@ -339,6 +341,10 @@ describe("evaluator", () => {
         input: "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }",
         expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
       },
+      {
+        input: "foobar",
+        expectedMessage: "identifier not found: foobar",
+      },
     ];
 
     for (const tt of tests) {
@@ -356,6 +362,30 @@ describe("evaluator", () => {
         tt.expectedMessage,
         `wrong error message. expected=${tt.expectedMessage}, got=${evaluated["message"]}`
       );
+    }
+  });
+  it("TestLetStatements", () => {
+    const tests = [
+      {
+        input: "let a = 5; a;",
+        expected: 5,
+      },
+      {
+        input: "let a = 5 * 5; a;",
+        expected: 25,
+      },
+      {
+        input: "let a = 5; let b = a; b;",
+        expected: 5,
+      },
+      {
+        input: "let a = 5; let b = a; let c = a + b + 5; c;",
+        expected: 15,
+      },
+    ];
+    for (const tt of tests) {
+      const evaluated = testEvalNode(tt.input);
+      testIntegerObject(evaluated, tt.expected);
     }
   });
 });

@@ -1,24 +1,24 @@
 import * as Ast from "#root/src/monkey/ast/ast.ts";
 import * as BlockStatement from "#root/src/monkey/ast/blockStatement.ts";
+import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as IfExpression from "#root/src/monkey/ast/ifExpression.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
-import * as Statement from "#root/src/monkey/ast/statement.ts";
 import * as Bool from "#root/src/monkey/object/bool.ts";
+import * as Environment from "#root/src/monkey/object/environment.ts";
 import * as ErrorObj from "#root/src/monkey/object/errorObj.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
 import * as Null from "#root/src/monkey/object/null.ts";
 import * as Obj from "#root/src/monkey/object/obj.ts";
-
-const evalStatements = (statements: Statement.t[]): Obj.t | null => {
-  let result: Obj.t | null = null;
-  for (const statement of statements) {
-    result = evalNode(statement);
-    if (result !== null && result["tag"] === "returnValue") {
-      return result["value"];
-    }
-  }
-  return result;
-};
+// const evalStatements = (statements: Statement.t[]): Obj.t | null => {
+//   let result: Obj.t | null = null;
+//   for (const statement of statements) {
+//     result = evalNode(statement, env);
+//     if (result !== null && result["tag"] === "returnValue") {
+//       return result["value"];
+//     }
+//   }
+//   return result;
+// };
 
 const TRUE: Bool.t = {
   tag: "boolean",
@@ -190,22 +190,25 @@ const isTruthy = (obj: Obj.t | null): boolean => {
   }
 };
 
-const evalIfExpression = (ie: IfExpression.t): Obj.t | null => {
+const evalIfExpression = (
+  ie: IfExpression.t,
+  env: Environment.t
+): Obj.t | null => {
   //   console.dir(ie, { depth: null });
-  const condition = evalNode(ie["condition"]);
+  const condition = evalNode(ie["condition"], env);
   if (isError(condition)) return condition;
   if (isTruthy(condition)) {
-    return evalNode(ie["consequence"]);
+    return evalNode(ie["consequence"], env);
   } else if (ie["alternative"]) {
-    return evalNode(ie["alternative"]);
+    return evalNode(ie["alternative"], env);
   } else {
     return NULL;
   }
 };
-const evalProgram = (program: Program.t): Obj.t | null => {
+const evalProgram = (program: Program.t, env: Environment.t): Obj.t | null => {
   let result: Obj.t | null = null;
   for (const statement of program.statements) {
-    result = evalNode(statement);
+    result = evalNode(statement, env);
     if (!result) return newError("result is null");
     switch (Obj.type(result)) {
       case Obj.RETURN_VALUE_OBJ:
@@ -220,10 +223,13 @@ const evalProgram = (program: Program.t): Obj.t | null => {
   return result;
 };
 
-const evalBlockStatement = (block: BlockStatement.t): Obj.t | null => {
+const evalBlockStatement = (
+  block: BlockStatement.t,
+  env: Environment.t
+): Obj.t | null => {
   let result: Obj.t | null = null;
   for (const statement of block.statements) {
-    result = evalNode(statement);
+    result = evalNode(statement, env);
     if (result !== null) {
       if (
         Obj.type(result) === Obj.RETURN_VALUE_OBJ ||
@@ -243,13 +249,24 @@ const isError = (obj: Obj.t | null): boolean => {
   return Obj.type(obj) === Obj.ERROR_OBJ;
 };
 
-export const evalNode = (node: Ast.t): Obj.t | null => {
+const evalIdentifier = (
+  node: Identifier.t,
+  env: Environment.t
+): Obj.t | null => {
+  const val = Environment.get(env, node["value"]);
+  if (!val) {
+    return newError(`identifier not found: ${node["value"]}`);
+  }
+  return val;
+};
+
+export const evalNode = (node: Ast.t, env: Environment.t): Obj.t | null => {
   //   console.dir(node, { depth: null });
   switch (node["tag"]) {
     case "program":
-      return evalProgram(node);
+      return evalProgram(node, env);
     case "expressionStatement":
-      return evalNode(node["expression"]);
+      return evalNode(node["expression"], env);
     case "integerLiteral":
       return {
         tag: "integer",
@@ -258,26 +275,35 @@ export const evalNode = (node: Ast.t): Obj.t | null => {
     case "booleanExpression":
       return nativeBoolToBooleanObject(node["value"]);
     case "prefixExpression":
-      const right = evalNode(node["right"]);
+      const right = evalNode(node["right"], env);
       if (isError(right)) return right;
       return evalPrefixExpression(node["operator"], right);
     case "infixExpression":
-      const left = evalNode(node["left"]);
+      const left = evalNode(node["left"], env);
       if (isError(left)) return left;
-      const rt = evalNode(node["right"]);
+      const rt = evalNode(node["right"], env);
       if (isError(rt)) return rt;
       return evalInfixExpression(node["operator"], left, rt);
     case "blockStatement":
-      return evalBlockStatement(node);
+      return evalBlockStatement(node, env);
     case "ifExpression":
-      return evalIfExpression(node);
+      return evalIfExpression(node, env);
     case "returnStatement":
-      const val = evalNode(node["returnValue"]);
+      const val = evalNode(node["returnValue"], env);
       if (isError(val)) return val;
       return {
         tag: "returnValue",
         value: val ?? NULL,
       };
+    case "identifier":
+      return evalIdentifier(node, env);
+    case "letStatement":
+      const letValue = evalNode(node["value"], env);
+      if (!letValue) return null;
+      if (isError(letValue)) return letValue;
+      Environment.set(env, node["name"]["value"], letValue);
+      return letValue;
+
     default:
       return null;
     //   const _exhaustiveCheck: never = node;

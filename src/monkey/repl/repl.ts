@@ -1,6 +1,7 @@
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 // import * as Token from "#root/src/monkey/token/token.ts";
 import * as Evaluator from "#root/src/monkey/evaluator/evaluator.ts";
+import * as Environment from "#root/src/monkey/object/environment.ts";
 import * as Obj from "#root/src/monkey/object/obj.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
 import { stdin as input, stdout as output } from "node:process";
@@ -16,6 +17,7 @@ const printParserErrors = (errors: string[]): void => {
 };
 
 export const start = async (): Promise<void> => {
+  const env = Environment.newEnvironment();
   while (true) {
     const line = await rl.question(PROMPT);
     const l = Lexer.init(line);
@@ -26,7 +28,7 @@ export const start = async (): Promise<void> => {
       printParserErrors(p.errors);
       continue;
     }
-    const evaluated = Evaluator.evalNode(program);
+    const evaluated = Evaluator.evalNode(program, env);
     if (evaluated) {
       console.log(Obj.inspect(evaluated));
     }
