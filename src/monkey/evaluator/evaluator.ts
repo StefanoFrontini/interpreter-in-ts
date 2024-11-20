@@ -193,6 +193,7 @@ const isTruthy = (obj: Obj.t | null): boolean => {
 const evalIfExpression = (ie: IfExpression.t): Obj.t | null => {
   //   console.dir(ie, { depth: null });
   const condition = evalNode(ie["condition"]);
+  if (isError(condition)) return condition;
   if (isTruthy(condition)) {
     return evalNode(ie["consequence"]);
   } else if (ie["alternative"]) {
@@ -235,6 +236,13 @@ const evalBlockStatement = (block: BlockStatement.t): Obj.t | null => {
   return result;
 };
 
+const isError = (obj: Obj.t | null): boolean => {
+  if (obj === null) {
+    return false;
+  }
+  return Obj.type(obj) === Obj.ERROR_OBJ;
+};
+
 export const evalNode = (node: Ast.t): Obj.t | null => {
   //   console.dir(node, { depth: null });
   switch (node["tag"]) {
@@ -251,10 +259,13 @@ export const evalNode = (node: Ast.t): Obj.t | null => {
       return nativeBoolToBooleanObject(node["value"]);
     case "prefixExpression":
       const right = evalNode(node["right"]);
+      if (isError(right)) return right;
       return evalPrefixExpression(node["operator"], right);
     case "infixExpression":
       const left = evalNode(node["left"]);
+      if (isError(left)) return left;
       const rt = evalNode(node["right"]);
+      if (isError(rt)) return rt;
       return evalInfixExpression(node["operator"], left, rt);
     case "blockStatement":
       return evalBlockStatement(node);
@@ -262,6 +273,7 @@ export const evalNode = (node: Ast.t): Obj.t | null => {
       return evalIfExpression(node);
     case "returnStatement":
       const val = evalNode(node["returnValue"]);
+      if (isError(val)) return val;
       return {
         tag: "returnValue",
         value: val ?? NULL,
