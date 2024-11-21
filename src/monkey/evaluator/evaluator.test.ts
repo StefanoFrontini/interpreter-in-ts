@@ -1,3 +1,5 @@
+import * as BlockStatement from "#root/src/monkey/ast/blockStatement.ts";
+import * as Identifier from "#root/src/monkey/ast/identifier.ts";
 import * as Evaluator from "#root/src/monkey/evaluator/evaluator.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Bool from "#root/src/monkey/object/bool.ts";
@@ -7,7 +9,6 @@ import * as Obj from "#root/src/monkey/object/obj.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
 const testEvalNode = (input: string): Obj.t | null => {
   const l = Lexer.init(input);
   const p = Parser.init(l);
@@ -387,5 +388,85 @@ describe("evaluator", () => {
       const evaluated = testEvalNode(tt.input);
       testIntegerObject(evaluated, tt.expected);
     }
+  });
+  it("TestFunctionObject", async () => {
+    const input = "fn(x) { x + 2; };";
+    const evaluated = testEvalNode(input);
+    if (!evaluated) {
+      throw new Error("evaluated is null");
+    }
+    assert.strictEqual(
+      evaluated["tag"],
+      "function",
+      `evaluated is not a function object. got=${evaluated["tag"]}`
+    );
+    assert.strictEqual(
+      evaluated["parameters"].length,
+      1,
+      `function has wrong parameters. got=${evaluated["parameters"].length}`
+    );
+    assert.strictEqual(
+      Identifier.string(evaluated["parameters"][0]),
+      "x",
+      `parameter is not 'x'. got=${evaluated["parameters"][0]["value"]}`
+    );
+
+    const expectedBody = "(x + 2)";
+    assert.strictEqual(
+      await BlockStatement.string(evaluated["body"]),
+      expectedBody,
+      `body is not ${expectedBody}. got=${BlockStatement.string(
+        evaluated["body"]
+      )}`
+    );
+  });
+  it("TestFunctionApplication", () => {
+    const tests = [
+      {
+        input: "let identity = fn(x) { x; }; identity(5);",
+        expected: 5,
+      },
+      {
+        input: "let identity = fn(x) { return x; }; identity(5);",
+        expected: 5,
+      },
+      {
+        input: "let double = fn(x) { x * 2; }; double(5);",
+        expected: 10,
+      },
+      {
+        input: "let add = fn(x, y) { x + y; }; add(5, 5);",
+        expected: 10,
+      },
+      {
+        input: "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));",
+        expected: 20,
+      },
+      {
+        input: "fn(x) { x; }(5)",
+        expected: 5,
+      },
+    ];
+    for (const tt of tests) {
+      const evaluated = testEvalNode(tt.input);
+      if (!evaluated) {
+        throw new Error("evaluated is null");
+      }
+      testIntegerObject(evaluated, tt.expected);
+    }
+  });
+  it("TestClosures", () => {
+    const input = `
+      let newAdder = fn(x) {
+        fn(y) { x + y };
+      };
+      let addTwo = newAdder(2);
+      addTwo(2);
+    `;
+    const evaluated = testEvalNode(input);
+    if (!evaluated) {
+      throw new Error("evaluated is null");
+    }
+    testIntegerObject(evaluated, 4);
   });
 });

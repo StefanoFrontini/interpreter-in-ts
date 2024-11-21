@@ -30,7 +30,7 @@ export const start = async (): Promise<void> => {
     }
     const evaluated = Evaluator.evalNode(program, env);
     if (evaluated) {
-      console.log(Obj.inspect(evaluated));
+      console.log(await Obj.inspect(evaluated));
     }
     // console.log(await Program.string(program));
     // let tok = Lexer.nextToken(l);

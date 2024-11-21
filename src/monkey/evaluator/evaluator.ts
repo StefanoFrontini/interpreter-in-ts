@@ -6,6 +6,7 @@ import * as Program from "#root/src/monkey/ast/program.ts";
 import * as Bool from "#root/src/monkey/object/bool.ts";
 import * as Environment from "#root/src/monkey/object/environment.ts";
 import * as ErrorObj from "#root/src/monkey/object/errorObj.ts";
+import * as Function from "#root/src/monkey/object/function.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
 import * as Null from "#root/src/monkey/object/null.ts";
 import * as Obj from "#root/src/monkey/object/obj.ts";
@@ -260,6 +261,41 @@ const evalIdentifier = (
   return val;
 };
 
+const evalExpressions = (exps: Ast.t[], env: Environment.t): Obj.t[] => {
+  const result: Obj.t[] = [];
+  for (const e of exps) {
+    const evaluated = evalNode(e, env);
+    if (!evaluated) return [newError("evaluated is null")];
+    if (isError(evaluated)) return [evaluated];
+    result.push(evaluated);
+  }
+  return result;
+};
+
+const extendFunctionEnv = (fn: Obj.t, args: Obj.t[]): Environment.t => {
+  const env = Environment.newEnclosedEnvironment(fn["env"]);
+  for (const [paramIdx, param] of fn["parameters"].entries()) {
+    Environment.set(env, param["value"], args[paramIdx]);
+  }
+  return env;
+};
+
+const unwrapReturnValue = (obj: Obj.t): Obj.t => {
+  if (Obj.type(obj) === Obj.RETURN_VALUE_OBJ) {
+    return obj["value"];
+  }
+  return obj;
+};
+const applyFunction = (fn: Obj.t, args: Obj.t[]): Obj.t | null => {
+  if (Obj.type(fn) !== Obj.FUNCTION_OBJ) {
+    return newError(`not a function: ${Obj.type(fn)}`);
+  }
+  const extendedEnv = extendFunctionEnv(fn, args);
+  const evaluated = evalNode(fn["body"], extendedEnv);
+  if (!evaluated) return newError("evaluated is null");
+  if (isError(evaluated)) return evaluated;
+  return unwrapReturnValue(evaluated);
+};
 export const evalNode = (node: Ast.t, env: Environment.t): Obj.t | null => {
   //   console.dir(node, { depth: null });
   switch (node["tag"]) {
@@ -303,10 +339,22 @@ export const evalNode = (node: Ast.t, env: Environment.t): Obj.t | null => {
       if (isError(letValue)) return letValue;
       Environment.set(env, node["name"]["value"], letValue);
       return letValue;
+    case "functionLiteral":
+      return {
+        tag: "function",
+        parameters: node["parameters"],
+        body: node["body"],
+        env: env,
+      } as Function.t;
+    case "callExpression":
+      const func = evalNode(node["function"], env);
+      if (!func) return newError("func is null");
+      if (isError(func)) return func;
+      const args = evalExpressions(node["arguments"], env);
+      if (args.length === 1 && isError(args[0])) return args[0];
+      return applyFunction(func, args);
 
     default:
       return null;
-    //   const _exhaustiveCheck: never = node;
-    //   throw new Error(_exhaustiveCheck);
   }
 };
