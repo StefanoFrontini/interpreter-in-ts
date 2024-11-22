@@ -469,4 +469,17 @@ describe("evaluator", () => {
     }
     testIntegerObject(evaluated, 4);
   });
+  it("TestStringLiteral", () => {
+    const input = `"Hello World!"`;
+    const evaluated = testEvalNode(input);
+    if (!evaluated) {
+      throw new Error("evaluated is null");
+    }
+    assert.strictEqual(
+      evaluated["tag"],
+      "string",
+      `object is not string. got=${evaluated["tag"]}`
+    );
+    assert.strictEqual(evaluated["value"], "Hello World!");
+  });
 });

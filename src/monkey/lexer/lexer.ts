@@ -6,6 +6,8 @@ export type t = {
   ch: string;
 };
 
+export const EOF_CHAR = "\0";
+
 export const init = (input: string): t => {
   const l = { input, position: 0, readPosition: 0, ch: "" };
   readChar(l);
@@ -14,7 +16,8 @@ export const init = (input: string): t => {
 
 const readChar = (l: t): void => {
   if (l.readPosition >= l.input.length) {
-    l.ch = "";
+    l.ch = EOF_CHAR;
+    // l.ch = "";
   } else {
     l.ch = l.input[l.readPosition];
   }
@@ -24,7 +27,7 @@ const readChar = (l: t): void => {
 
 const peekChar = (l: t): string => {
   if (l.readPosition >= l.input.length) {
-    return "";
+    return EOF_CHAR;
   } else {
     return l.input[l.readPosition];
   }
@@ -64,6 +67,15 @@ const newToken = (t: Token.TokenType, l: string): Token.t => ({
   type: t,
   literal: l,
 });
+
+const readString = (l: t): string => {
+  const position = l.position + 1;
+  do {
+    readChar(l);
+  } while (l.ch !== '"' && l.ch !== EOF_CHAR);
+
+  return l.input.slice(position, l.position);
+};
 
 export const nextToken = (l: t): Token.t => {
   let tok = newToken(Token.EOF, "");
@@ -131,7 +143,11 @@ export const nextToken = (l: t): Token.t => {
     case "}":
       tok = newToken(Token.RBRACE, l.ch);
       break;
-    case "":
+    case '"':
+      tok.type = Token.STRING;
+      tok.literal = readString(l);
+      break;
+    case EOF_CHAR:
       tok = newToken(Token.EOF, l.ch);
       break;
     default:

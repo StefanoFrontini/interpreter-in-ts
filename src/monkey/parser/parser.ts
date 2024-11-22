@@ -12,9 +12,9 @@ import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
+import * as StringLiteral from "#root/src/monkey/ast/stringLiteral.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
-
 const LOWEST = 1,
   EQUALS = 2,
   LESSGREATER = 3,
@@ -240,6 +240,14 @@ const parseCallExpression = (p: t, fn: Expression.t | null): Expression.t => {
   return expression as CallExpression.t;
 };
 
+const parseStringLiteral = (p: t): Expression.t => {
+  return {
+    tag: "stringLiteral",
+    token: p.curToken,
+    value: p.curToken.literal,
+  } as StringLiteral.t;
+};
+
 export const init = (l: Lexer.t): t => {
   const p: t = {
     l: l,
@@ -270,6 +278,7 @@ export const init = (l: Lexer.t): t => {
   registerPrefix(p, Token.IF, parseIfExpression);
   registerPrefix(p, Token.FUNCTION, parseFunctionLiteral);
   registerInfix(p, Token.LPAREN, parseCallExpression);
+  registerPrefix(p, Token.STRING, parseStringLiteral);
   return p;
 };
 

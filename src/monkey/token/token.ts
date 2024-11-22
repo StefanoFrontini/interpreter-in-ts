@@ -25,7 +25,8 @@ export type TokenType =
   | "FALSE"
   | "IF"
   | "ELSE"
-  | "RETURN";
+  | "RETURN"
+  | "STRING";
 
 export type t = {
   type: TokenType;
@@ -61,7 +62,8 @@ export const ILLEGAL = "ILLEGAL",
   FALSE = "FALSE",
   IF = "IF",
   ELSE = "ELSE",
-  RETURN = "RETURN";
+  RETURN = "RETURN",
+  STRING = "STRING";
 
 const keywords = new Map<string, TokenType>([
   ["fn", FUNCTION],

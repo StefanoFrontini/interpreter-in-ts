@@ -4,6 +4,7 @@ import * as Function from "#root/src/monkey/object/function.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
 import * as Null from "#root/src/monkey/object/null.ts";
 import * as ReturnValue from "#root/src/monkey/object/returnValue.ts";
+import * as String from "#root/src/monkey/object/string.ts";
 
 export type ObjectType =
   | "INTEGER"
@@ -11,14 +12,16 @@ export type ObjectType =
   | "NULL"
   | "RETURN_VALUE"
   | "ERROR_OBJ"
-  | "FUNCTION";
+  | "FUNCTION"
+  | "STRING";
 
 export const INTEGER_OBJ = "INTEGER",
   BOOLEAN_OBJ = "BOOLEAN",
   NULL_OBJ = "NULL",
   RETURN_VALUE_OBJ = "RETURN_VALUE",
   ERROR_OBJ = "ERROR_OBJ",
-  FUNCTION_OBJ = "FUNCTION";
+  FUNCTION_OBJ = "FUNCTION",
+  STRING_OBJ = "STRING";
 
 export type t =
   | Integer.t
@@ -26,7 +29,8 @@ export type t =
   | Null.t
   | ReturnValue.t
   | ErrorObj.t
-  | Function.t;
+  | Function.t
+  | String.t;
 
 export const inspect = async (obj: t): Promise<string> => {
   switch (obj["tag"]) {
@@ -42,6 +46,8 @@ export const inspect = async (obj: t): Promise<string> => {
       return ErrorObj.inspect(obj);
     case "function":
       return await Function.inspect(obj);
+    case "string":
+      return String.inspect(obj);
     default:
       const _exhaustiveCheck: never = obj;
       throw new Error(_exhaustiveCheck);
@@ -62,6 +68,8 @@ export const type = (obj: t): ObjectType => {
       return ERROR_OBJ;
     case "function":
       return FUNCTION_OBJ;
+    case "string":
+      return STRING_OBJ;
     default:
       const _exhaustiveCheck: never = obj;
       throw new Error(_exhaustiveCheck);

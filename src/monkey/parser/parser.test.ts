@@ -12,6 +12,7 @@ import * as PrefixExpression from "#root/src/monkey/ast/prefixExpression.ts";
 import * as Program from "#root/src/monkey/ast/program.ts";
 import * as ReturnStatement from "#root/src/monkey/ast/returnStatement.ts";
 import * as Statement from "#root/src/monkey/ast/statement.ts";
+import * as StringLiteral from "#root/src/monkey/ast/stringLiteral.ts";
 import * as Lexer from "#root/src/monkey/lexer/lexer.ts";
 import * as Parser from "#root/src/monkey/parser/parser.ts";
 import * as Token from "#root/src/monkey/token/token.ts";
@@ -895,5 +896,40 @@ describe("parser", () => {
     testLiteralExpression(ce.arguments[0], 1);
     testInfixExpression(ce.arguments[1], 2, "*", 3);
     testInfixExpression(ce.arguments[2], 4, "+", 5);
+  });
+  it("TestStringLiteralExpression", () => {
+    const input = `"hello world";`;
+    const l = Lexer.init(input);
+    const p = Parser.init(l);
+    const program = Parser.parseProgram(p);
+    assert.strictEqual(
+      p.errors.length,
+      0,
+      `Parser.errors() returned ${p.errors.length} errors:\n${p.errors.join(
+        "\n"
+      )}`
+    );
+    assert.strictEqual(
+      program.statements.length,
+      1,
+      `program.statements does not contain 1 statements. got=${program.statements.length}`
+    );
+    assert.strictEqual(
+      program.statements[0]["tag"],
+      "expressionStatement",
+      `program.statements[0] is not an ExpressionStatement. got=${program.statements[0]["tag"]}`
+    );
+    const stmt = program.statements[0] as ExpressionStatement.t;
+    assert.strictEqual(
+      stmt.expression["tag"],
+      "stringLiteral",
+      `stmt.expression is not a StringLiteral. got=${stmt.expression}`
+    );
+    const sl = stmt.expression as StringLiteral.t;
+    assert.strictEqual(
+      sl.value,
+      "hello world",
+      `sl.value is not 'hello world'. got=${sl.value}`
+    );
   });
 });

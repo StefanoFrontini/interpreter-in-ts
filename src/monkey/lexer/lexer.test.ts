@@ -24,6 +24,8 @@ describe("lexer", () => {
 
     10 == 10;
     10 != 9;
+    "foobar"
+    "foo bar"
     `;
 
     const tests: Array<{
@@ -103,7 +105,9 @@ describe("lexer", () => {
       { expectedType: Token.NOT_EQ, expectedLiteral: "!=" },
       { expectedType: Token.INT, expectedLiteral: "9" },
       { expectedType: Token.SEMICOLON, expectedLiteral: ";" },
-      { expectedType: Token.EOF, expectedLiteral: "" },
+      { expectedType: Token.STRING, expectedLiteral: "foobar" },
+      { expectedType: Token.STRING, expectedLiteral: "foo bar" },
+      { expectedType: Token.EOF, expectedLiteral: Lexer.EOF_CHAR },
     ];
 
     const l = Lexer.init(input);

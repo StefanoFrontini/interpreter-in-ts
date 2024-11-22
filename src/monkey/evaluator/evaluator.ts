@@ -10,6 +10,7 @@ import * as Function from "#root/src/monkey/object/function.ts";
 import * as Integer from "#root/src/monkey/object/integer.ts";
 import * as Null from "#root/src/monkey/object/null.ts";
 import * as Obj from "#root/src/monkey/object/obj.ts";
+import * as String from "#root/src/monkey/object/string.ts";
 // const evalStatements = (statements: Statement.t[]): Obj.t | null => {
 //   let result: Obj.t | null = null;
 //   for (const statement of statements) {
@@ -353,6 +354,11 @@ export const evalNode = (node: Ast.t, env: Environment.t): Obj.t | null => {
       const args = evalExpressions(node["arguments"], env);
       if (args.length === 1 && isError(args[0])) return args[0];
       return applyFunction(func, args);
+    case "stringLiteral":
+      return {
+        tag: "string",
+        value: node["value"],
+      } as String.t;
 
     default:
       return null;
